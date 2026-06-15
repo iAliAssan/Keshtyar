@@ -1,6 +1,4 @@
 import { createBrowserClient } from '@supabase/ssr';
-import { createServerClient } from '@supabase/ssr';
-import { cookies } from 'next/headers';
 
 export const createClient = () => {
   return createBrowserClient(
@@ -9,7 +7,10 @@ export const createClient = () => {
   );
 };
 
+// این تابع فقط برای API Route ها استفاده می‌شود (نه برای صفحات)
 export const createServerSupabaseClient = async () => {
+  const { createServerClient } = await import('@supabase/ssr');
+  const { cookies } = await import('next/headers');
   const cookieStore = await cookies();
   
   return createServerClient(
