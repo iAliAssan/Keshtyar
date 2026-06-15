@@ -1,6 +1,8 @@
-import { NextResponse, type NextRequest } from 'next/server';
-
-export async function middleware(request: NextRequest) {
-  return NextResponse.next();
+// middleware به طور کامل غیرفعال شد
+export function middleware() {
+  return;
 }
-export const config = { matcher: [] };
+
+export const config = {
+  matcher: [],
+};
