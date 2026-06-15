@@ -1,5 +1,6 @@
-export const dynamic = 'force-dynamic';
 'use client';
+
+export const dynamic = 'force-dynamic';
 
 import { useEffect, useState } from 'react';
 import { useAuth, Card, Button } from '@/components';
@@ -12,7 +13,6 @@ export default function DeviceConfigPage() {
   const [apiUrl, setApiUrl] = useState('');
 
   useEffect(() => {
-    // فقط در کلاینت می‌توان به window دسترسی داشت
     setApiUrl(`${window.location.origin}/api/sensor`);
     
     const checkStatus = async () => {
