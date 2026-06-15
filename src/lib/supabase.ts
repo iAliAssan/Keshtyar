@@ -1,8 +1,6 @@
 import { createBrowserClient } from '@supabase/ssr';
-import { createServerClient } from '@supabase/ssr';
-import { cookies } from 'next/headers';
 
-// کلاینت سمت کاربر (برای استفاده در کامپوننت‌های کلاینت)
+// فقط برای کلاینت (مرورگر)
 export const createClient = () => {
   return createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -10,10 +8,13 @@ export const createClient = () => {
   );
 };
 
-// کلاینت سمت سرور (برای استفاده در API Route ها)
+// تابع مخصوص سرور (برای استفاده در API Route ها)
+// این تابع را به صورت داینامیک ایمپورت می‌کنیم تا در کلاینت اجرا نشود
 export const createServerSupabaseClient = async () => {
+  const { createServerClient } = await import('@supabase/ssr');
+  const { cookies } = await import('next/headers');
   const cookieStore = await cookies();
-
+  
   return createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
