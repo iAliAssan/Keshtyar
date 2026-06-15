@@ -9,8 +9,12 @@ export default function DeviceConfigPage() {
   const { user } = useAuth();
   const [lastUpdate, setLastUpdate] = useState<string | null>(null);
   const [status, setStatus] = useState<'online' | 'offline' | 'waiting'>('waiting');
+  const [apiUrl, setApiUrl] = useState('');
 
   useEffect(() => {
+    // فقط در کلاینت می‌توان به window دسترسی داشت
+    setApiUrl(`${window.location.origin}/api/sensor`);
+    
     const checkStatus = async () => {
       const res = await fetch('/api/last-sensor');
       const data = await res.json();
@@ -27,7 +31,6 @@ export default function DeviceConfigPage() {
     return () => clearInterval(interval);
   }, []);
 
-  const apiUrl = `${window.location.origin}/api/sensor`;
   const deviceCode = user?.device_code || '';
 
   const copyToClipboard = (text: string) => {
@@ -46,8 +49,8 @@ export default function DeviceConfigPage() {
             <div>
               <label className="block text-sm text-[var(--text-secondary)] mb-1">آدرس API</label>
               <div className="flex gap-2">
-                <code className="flex-1 p-2 rounded-lg bg-[var(--bg-secondary)] text-sm break-all">{apiUrl}</code>
-                <Button variant="outline" size="sm" onClick={() => copyToClipboard(apiUrl)}><i className="fas fa-copy"></i></Button>
+                <code className="flex-1 p-2 rounded-lg bg-[var(--bg-secondary)] text-sm break-all">{apiUrl || 'در حال بارگذاری...'}</code>
+                <Button variant="outline" size="sm" onClick={() => copyToClipboard(apiUrl)} disabled={!apiUrl}><i className="fas fa-copy"></i></Button>
               </div>
             </div>
             <div>
@@ -106,7 +109,7 @@ TANK_TRIG_PIN = 5
 TANK_ECHO_PIN = 6
 RELAY_GPIO_LIST = [12, 13, 14, 15]`}
           </pre>
-          <Button variant="outline" className="mt-3" onClick={() => copyToClipboard(`SERVER_URL="${apiUrl}"\nDEVICE_CODE="${deviceCode}"`)}>
+          <Button variant="outline" className="mt-3" onClick={() => copyToClipboard(`SERVER_URL="${apiUrl}"\nDEVICE_CODE="${deviceCode}"`)} disabled={!apiUrl}>
             <i className="fas fa-copy ml-1"></i> کپی تنظیمات
           </Button>
         </Card>
