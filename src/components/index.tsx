@@ -3,18 +3,26 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import { useTheme as useNextTheme } from 'next-themes';
 import { createClient } from '@/lib/supabase';
-import type { User, Relay, AutomationRule, AlertRule, SensorData, WeatherForecast } from '@/types';
+import type { User, Relay, AutomationRule, AlertRule, SensorData, WeatherForecast as WeatherForecastType } from '@/types';
+
+// ---------------------- Chart.js setup ----------------------
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend,
+  Filler,
+} from 'chart.js';
+import { Line } from 'react-chartjs-2';
+
+ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler);
 
 // ==================== Theme Provider ====================
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  return (
-    <ThemeProviderInner>
-      {children}
-    </ThemeProviderInner>
-  );
-}
-
-function ThemeProviderInner({ children }: { children: React.ReactNode }) {
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
   if (!mounted) return <>{children}</>;
@@ -269,5 +277,227 @@ export function Footer() {
       </p>
       <p className="text-xs text-[var(--text-secondary)] mt-1">۱۴۰۵ · تمامی حقوق محفوظ است</p>
     </footer>
+  );
+}
+
+// ==================== Weather Component ====================
+interface WeatherForecastProps {
+  forecast: WeatherForecastType | null;
+  hourlyData: Record<string, Array<{ time: string; temp: number; humidity: number }>> | null;
+}
+
+export function WeatherForecast({ forecast, hourlyData }: WeatherForecastProps) {
+  const [selectedDay, setSelectedDay] = useState<string | null>(null);
+  const [hourly, setHourly] = useState<typeof hourlyData>(null);
+
+  useEffect(() => {
+    if (hourlyData) setHourly(hourlyData);
+  }, [hourlyData]);
+
+  const showHourly = (dayKey: string) => {
+    setSelectedDay(dayKey);
+    if (!hourly) return;
+    let date = '';
+    const today = new Date().toISOString().slice(0, 10);
+    const tomorrow = new Date(Date.now() + 86400000).toISOString().slice(0, 10);
+    const day3 = new Date(Date.now() + 172800000).toISOString().slice(0, 10);
+    if (dayKey === 'today') date = today;
+    else if (dayKey === 'tomorrow') date = tomorrow;
+    else date = day3;
+    
+    const hours = hourly[date];
+    if (!hours) return;
+    const filtered = hours.filter((_, i) => i % 3 === 0);
+    const container = document.getElementById('hourlyContainer');
+    if (container) {
+      container.innerHTML = `
+        <div class="mt-4 p-4 rounded-xl bg-[var(--bg-secondary)]">
+          <h6 class="mb-3 font-bold">پیش‌بینی ساعتی</h6>
+          <div class="grid grid-cols-4 gap-2">
+            ${filtered.map(h => `
+              <div class="text-center p-2 rounded-lg bg-[var(--card-bg)]">
+                <div class="text-sm">${h.time}</div>
+                <div class="font-bold">${h.temp}°</div>
+                <div class="text-xs text-[var(--text-secondary)]">${h.humidity}%</div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `;
+    }
+  };
+
+  if (!forecast) return <div className="text-center py-8">دریافت اطلاعات آب و هوا امکان‌پذیر نیست</div>;
+
+  return (
+    <Card className="p-5">
+      <div className="text-center mb-4">
+        <i className="fas fa-sun text-4xl text-yellow-500"></i>
+        <h3 className="text-3xl font-bold mt-2">{Math.round(forecast.current.temperature)}°C</h3>
+        <div className="flex justify-center gap-4 mt-2 text-sm text-[var(--text-secondary)]">
+          <span><i className="fas fa-tint"></i> {forecast.current.rain} mm</span>
+          <span><i className="fas fa-wind"></i> {forecast.current.wind} km/h</span>
+        </div>
+      </div>
+      <div className="grid grid-cols-3 gap-3 mb-4">
+        {[
+          { key: 'today', label: 'امروز', temp: forecast.today.temp_max, rain: forecast.today.rain },
+          { key: 'tomorrow', label: 'فردا', temp: forecast.tomorrow.temp_max, rain: forecast.tomorrow.rain },
+          { key: 'next3', label: '۳ روز', temp: forecast.next_3_days.temp_max, rain: forecast.next_3_days.total_rain }
+        ].map(day => (
+          <div key={day.key} onClick={() => showHourly(day.key)} className="text-center p-3 rounded-xl bg-[var(--bg-secondary)] cursor-pointer hover:bg-[#9CB080]/10 transition-all">
+            <div className="font-bold">{day.label}</div>
+            <div className="text-xl">{Math.round(day.temp)}°</div>
+            <div className="text-xs text-[var(--text-secondary)]">{Math.round(day.rain)} mm</div>
+          </div>
+        ))}
+      </div>
+      <div id="hourlyContainer"></div>
+    </Card>
+  );
+}
+
+// ==================== Chart Component ====================
+interface ChartData {
+  timestamps: string[];
+  values: number[];
+  label: string;
+  color: string;
+  borderColor: string;
+  maxY?: number;
+}
+
+export function LineChart({ data, title }: { data: ChartData; title: string }) {
+  const chartData = {
+    labels: data.timestamps,
+    datasets: [{
+      label: data.label,
+      data: data.values,
+      borderColor: data.borderColor,
+      backgroundColor: data.color,
+      tension: 0.3,
+      fill: true,
+      pointRadius: data.timestamps.length > 24 ? 2 : 4,
+    }]
+  };
+  const options = {
+    responsive: true,
+    maintainAspectRatio: true,
+    plugins: { legend: { position: 'top' as const, rtl: true }, tooltip: { rtl: true } },
+    scales: { y: { beginAtZero: true, max: data.maxY, title: { display: true, text: data.label } } }
+  };
+  return (
+    <Card className="p-4">
+      <h5 className="font-bold mb-3">{title}</h5>
+      <Line data={chartData} options={options} />
+    </Card>
+  );
+}
+
+// ==================== Farm Status Card ====================
+export function FarmStatusCard({ status, text }: { status: string; text: string }) {
+  const colors: Record<string, string> = {
+    excellent: 'bg-green-500/20 text-green-500',
+    good: 'bg-blue-500/20 text-blue-500',
+    warning: 'bg-yellow-500/20 text-yellow-500',
+    critical: 'bg-red-500/20 text-red-500'
+  };
+  return (
+    <Card className="p-5 text-center">
+      <i className="fas fa-chart-line text-2xl text-[var(--text-secondary)] mb-2"></i>
+      <h5 className="text-[var(--text-secondary)] mb-2">وضعیت مزرعه</h5>
+      <div className={`p-3 rounded-xl ${colors[status]} font-bold text-xl`}>{text}</div>
+    </Card>
+  );
+}
+
+// ==================== Relay Card ====================
+export function RelayCard({ relay, onToggle, onDelete }: { relay: Relay; onToggle: (id: number) => void; onDelete: (id: number) => void }) {
+  return (
+    <Card className="p-4">
+      <div className="flex justify-between items-start mb-3">
+        <i className="fas fa-microchip text-2xl text-[#9CB080]"></i>
+        <span className={`px-3 py-1 rounded-full text-sm ${relay.state ? 'bg-green-500/20 text-green-500' : 'bg-gray-500/20 text-gray-400'}`}>
+          <i className={`fas ${relay.state ? 'fa-power-off' : 'fa-power-off'}`}></i> {relay.state ? 'روشن' : 'خاموش'}
+        </span>
+      </div>
+      <h4 className="text-xl font-bold mb-1">{relay.name}</h4>
+      <p className="text-sm text-[var(--text-secondary)] mb-3">GPIO: {relay.gpio}</p>
+      <div className="flex gap-2">
+        <Button variant={relay.state ? 'warning' : 'secondary'} size="sm" onClick={() => onToggle(relay.id)} className="flex-1">
+          {relay.state ? 'خاموش کردن' : 'روشن کردن'}
+        </Button>
+        <Button variant="danger" size="sm" onClick={() => onDelete(relay.id)}>
+          <i className="fas fa-trash"></i>
+        </Button>
+      </div>
+    </Card>
+  );
+}
+
+// ==================== Rule Card ====================
+export function RuleCard({ rule, relayName, onToggle, onDelete }: { rule: AutomationRule; relayName: string; onToggle: (id: number) => void; onDelete: (id: number) => void }) {
+  const getRuleText = () => {
+    if (rule.condition_type === 'and') {
+      return `رطوبت خاک ${rule.rule_type === 'moisture_below' ? '<' : '>'} ${rule.threshold}% و ${rule.second_sensor_type === 'temperature' ? 'دما' : 'تانک'} ${rule.second_operator === 'below' ? '<' : '>'} ${rule.second_threshold}`;
+    }
+    if (rule.rule_type === 'schedule') return `زمانبندی: ساعت ${rule.schedule_time}`;
+    const parts = rule.rule_type.split('_');
+    const sensorMap: Record<string, string> = { soil_moisture: 'رطوبت خاک', temperature: 'دما', tank_level: 'تانک' };
+    const opMap: Record<string, string> = { below: '<', above: '>', equal: '=', not_equal: '≠' };
+    return `${sensorMap[parts[0]] || parts[0]} ${opMap[parts[1]] || parts[1]} ${rule.threshold}`;
+  };
+  return (
+    <Card className="p-4">
+      <div className="flex justify-between items-start mb-2">
+        <i className={`fas ${rule.condition_type === 'and' ? 'fa-code-branch' : rule.rule_type === 'schedule' ? 'fa-clock' : 'fa-tint'} text-xl text-[#9CB080]`}></i>
+        <span className={`px-2 py-1 rounded-full text-xs ${rule.active ? 'bg-green-500/20 text-green-500' : 'bg-gray-500/20 text-gray-400'}`}>
+          {rule.active ? 'فعال' : 'غیرفعال'}
+        </span>
+      </div>
+      <h5 className="font-bold mb-1">{rule.name}</h5>
+      <p className="text-sm text-[var(--text-secondary)]">رله: {relayName}</p>
+      <p className="text-sm mt-2 p-2 rounded-lg bg-[var(--bg-secondary)]">{getRuleText()}</p>
+      <p className="text-xs text-[var(--text-secondary)] mt-2">
+        عملیات: <span className={rule.action_state ? 'text-green-500' : 'text-red-500'}>{rule.action_state ? 'روشن' : 'خاموش'}</span>
+      </p>
+      <div className="flex gap-2 mt-3">
+        <Button variant={rule.active ? 'warning' : 'secondary'} size="sm" onClick={() => onToggle(rule.id)} className="flex-1">
+          {rule.active ? 'غیرفعال' : 'فعال'}
+        </Button>
+        <Button variant="danger" size="sm" onClick={() => onDelete(rule.id)}>
+          <i className="fas fa-trash"></i>
+        </Button>
+      </div>
+    </Card>
+  );
+}
+
+// ==================== Alert Rule Card ====================
+export function AlertRuleCard({ rule, onToggle, onDelete }: { rule: AlertRule; onToggle: (id: number) => void; onDelete: (id: number) => void }) {
+  const sensorMap: Record<string, string> = { soil_moisture: 'رطوبت خاک', temperature: 'دما', tank_level: 'سطح تانک' };
+  const opMap: Record<string, string> = { below: 'کمتر از', above: 'بیشتر از', equal: 'مساوی', not_equal: 'نامساوی' };
+  return (
+    <Card className="p-4">
+      <div className="flex justify-between items-start mb-2">
+        <i className="fas fa-bell text-xl text-[#9CB080]"></i>
+        <span className={`px-2 py-1 rounded-full text-xs ${rule.enabled ? 'bg-green-500/20 text-green-500' : 'bg-gray-500/20 text-gray-400'}`}>
+          {rule.enabled ? 'فعال' : 'غیرفعال'}
+        </span>
+      </div>
+      <h5 className="font-bold mb-1">{rule.name}</h5>
+      <p className="text-sm mt-2 p-2 rounded-lg bg-[var(--bg-secondary)]">
+        {sensorMap[rule.sensor_type]} {opMap[rule.operator]} {rule.threshold}
+      </p>
+      <p className="text-xs text-[var(--text-secondary)] mt-2 line-clamp-2">{rule.sms_template}</p>
+      <div className="flex gap-2 mt-3">
+        <Button variant={rule.enabled ? 'warning' : 'secondary'} size="sm" onClick={() => onToggle(rule.id)} className="flex-1">
+          {rule.enabled ? 'غیرفعال' : 'فعال'}
+        </Button>
+        <Button variant="danger" size="sm" onClick={() => onDelete(rule.id)}>
+          <i className="fas fa-trash"></i>
+        </Button>
+      </div>
+    </Card>
   );
 }
