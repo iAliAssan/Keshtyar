@@ -4,14 +4,10 @@ import './globals.css';
 
 export const metadata: Metadata = {
   title: 'کشتیار - دستیار هوشمند کشاورزی',
-  description: 'سیستم هوشمند پایش و مدیریت مزرعه',
+  description: 'سیستم پایش و مدیریت مزرعه',
 };
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="fa" dir="rtl" suppressHydrationWarning>
       <head>
