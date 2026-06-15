@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build --no-lint",
+    "build": "next build",
     "start": "next start",
     "lint": "next lint"
   },
@@ -16,9 +16,7 @@
     "react-dom": "^18.3.0",
     "chart.js": "^4.4.0",
     "react-chartjs-2": "^5.2.0",
-    "next-themes": "^0.3.0",
-    "tailwind-merge": "^2.5.0",
-    "clsx": "^2.1.0"
+    "next-themes": "^0.3.0"
   },
   "devDependencies": {
     "@types/node": "^20",
