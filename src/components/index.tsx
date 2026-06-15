@@ -3,7 +3,7 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import { useTheme as useNextTheme } from 'next-themes';
 import { createClient } from '@/lib/supabase';
-import type { User, Relay, AutomationRule, AlertRule, SensorData, WeatherForecast as WeatherForecastType } from '@/types';
+import type { User, Relay, AutomationRule, AlertRule, WeatherForecast as WeatherForecastType } from '@/types';
 
 // ---------------------- Chart.js setup ----------------------
 import {
@@ -117,11 +117,11 @@ export function Button({ variant = 'primary', size = 'md', loading, children, cl
     lg: 'px-6 py-3 text-lg',
   };
   const variantStyles = {
-    primary: 'bg-[#9CB080] text-white hover:bg-[#7A8F60] shadow-lg hover:shadow-xl',
-    secondary: 'bg-[#6C91B3] text-white hover:bg-[#5A7A9A] shadow-lg hover:shadow-xl',
+    primary: 'bg-primary text-white hover:bg-[#7A8F60] shadow-lg hover:shadow-xl',
+    secondary: 'bg-secondary text-white hover:bg-[#5A7A9A] shadow-lg hover:shadow-xl',
     danger: 'bg-red-500 text-white hover:bg-red-600',
     warning: 'bg-yellow-500 text-black hover:bg-yellow-600',
-    outline: 'border-2 border-[#9CB080] text-[#9CB080] bg-transparent hover:bg-[#9CB080] hover:text-white',
+    outline: 'border-2 border-primary text-primary bg-transparent hover:bg-primary hover:text-white',
   };
   return (
     <button className={`${baseStyles} ${sizeStyles[size]} ${variantStyles[variant]} ${className}`} disabled={disabled || loading} {...props}>
@@ -164,7 +164,7 @@ export function Modal({ isOpen, onClose, title, children }: ModalProps) {
       <div className="bg-[var(--card-bg)] rounded-2xl max-w-md w-full max-h-[90vh] overflow-auto shadow-2xl" onClick={(e) => e.stopPropagation()}>
         <div className="flex justify-between items-center p-4 border-b border-[var(--border-color)]">
           <h3 className="text-xl font-bold">{title}</h3>
-          <button onClick={onClose} className="text-2xl hover:text-[#9CB080]">&times;</button>
+          <button onClick={onClose} className="text-2xl hover:text-primary">&times;</button>
         </div>
         <div className="p-4">{children}</div>
       </div>
@@ -182,7 +182,7 @@ export function Input({ label, error, className = '', ...props }: InputProps) {
     <div className="mb-4">
       {label && <label className="block mb-2 font-medium text-[var(--text-primary)]">{label}</label>}
       <input
-        className={`w-full px-4 py-3 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-color)] text-[var(--text-primary)] focus:outline-none focus:border-[#9CB080] focus:ring-2 focus:ring-[#9CB080]/20 transition-all ${className}`}
+        className={`w-full px-4 py-3 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-color)] text-[var(--text-primary)] focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all ${className}`}
         {...props}
       />
       {error && <p className="mt-1 text-sm text-red-500">{error}</p>}
@@ -200,7 +200,7 @@ export function Select({ label, options, className = '', ...props }: SelectProps
     <div className="mb-4">
       {label && <label className="block mb-2 font-medium text-[var(--text-primary)]">{label}</label>}
       <select
-        className={`w-full px-4 py-3 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-color)] text-[var(--text-primary)] focus:outline-none focus:border-[#9CB080] ${className}`}
+        className={`w-full px-4 py-3 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-color)] text-[var(--text-primary)] focus:outline-none focus:border-primary ${className}`}
         {...props}
       >
         {options.map((opt) => (
@@ -229,7 +229,7 @@ export function Sidebar() {
 
   return (
     <>
-      <button onClick={() => setIsMobileOpen(true)} className="lg:hidden fixed top-4 right-4 z-50 p-2 rounded-xl bg-[#9CB080] text-white shadow-lg">
+      <button onClick={() => setIsMobileOpen(true)} className="lg:hidden fixed top-4 right-4 z-50 p-2 rounded-xl bg-primary text-white shadow-lg">
         <i className="fas fa-bars text-xl"></i>
       </button>
       <aside className={`
@@ -239,20 +239,20 @@ export function Sidebar() {
       `}>
         <div className="p-6">
           <div className="text-center mb-8">
-            <i className="fas fa-leaf text-4xl text-[#9CB080]"></i>
+            <i className="fas fa-leaf text-4xl text-primary"></i>
             <h2 className="text-2xl font-bold mt-2">AURON</h2>
             <p className="text-sm text-[var(--text-secondary)]">Intelligent Systems</p>
           </div>
           <nav className="space-y-2">
             {menuItems.map((item) => (
-              <a key={item.href} href={item.href} className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-[#9CB080]/10 transition-all hover:translate-x-[-4px] group">
-                <i className={`${item.icon} w-5 text-[#9CB080]`}></i>
+              <a key={item.href} href={item.href} className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-primary/10 transition-all hover:translate-x-[-4px] group">
+                <i className={`${item.icon} w-5 text-primary`}></i>
                 <span>{item.label}</span>
               </a>
             ))}
           </nav>
           <div className="absolute bottom-20 left-0 right-0 px-6 space-y-3">
-            <button onClick={() => setTheme(isDark ? 'light' : 'dark')} className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-xl border border-[var(--border-color)] hover:bg-[#9CB080]/10">
+            <button onClick={() => setTheme(isDark ? 'light' : 'dark')} className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-xl border border-[var(--border-color)] hover:bg-primary/10">
               <i className={`fas ${isDark ? 'fa-sun' : 'fa-moon'}`}></i>
               <span>{isDark ? 'حالت روشن' : 'حالت تاریک'}</span>
             </button>
@@ -272,8 +272,8 @@ export function Footer() {
   return (
     <footer className="py-6 text-center border-t border-[var(--border-color)] mt-8">
       <p className="text-[var(--text-secondary)]">
-        <i className="fas fa-seedling text-[#9CB080] ml-1"></i>
-        AURON · Intelligent Systems · <a href="https://auron.ir" target="_blank" rel="noopener noreferrer" className="text-[#9CB080] hover:underline">auron.ir</a>
+        <i className="fas fa-seedling text-primary ml-1"></i>
+        AURON · Intelligent Systems · <a href="https://auron.ir" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">auron.ir</a>
       </p>
       <p className="text-xs text-[var(--text-secondary)] mt-1">۱۴۰۵ · تمامی حقوق محفوظ است</p>
     </footer>
@@ -287,7 +287,6 @@ interface WeatherForecastProps {
 }
 
 export function WeatherForecast({ forecast, hourlyData }: WeatherForecastProps) {
-  const [selectedDay, setSelectedDay] = useState<string | null>(null);
   const [hourly, setHourly] = useState<typeof hourlyData>(null);
 
   useEffect(() => {
@@ -295,7 +294,6 @@ export function WeatherForecast({ forecast, hourlyData }: WeatherForecastProps) 
   }, [hourlyData]);
 
   const showHourly = (dayKey: string) => {
-    setSelectedDay(dayKey);
     if (!hourly) return;
     let date = '';
     const today = new Date().toISOString().slice(0, 10);
@@ -345,7 +343,7 @@ export function WeatherForecast({ forecast, hourlyData }: WeatherForecastProps) 
           { key: 'tomorrow', label: 'فردا', temp: forecast.tomorrow.temp_max, rain: forecast.tomorrow.rain },
           { key: 'next3', label: '۳ روز', temp: forecast.next_3_days.temp_max, rain: forecast.next_3_days.total_rain }
         ].map(day => (
-          <div key={day.key} onClick={() => showHourly(day.key)} className="text-center p-3 rounded-xl bg-[var(--bg-secondary)] cursor-pointer hover:bg-[#9CB080]/10 transition-all">
+          <div key={day.key} onClick={() => showHourly(day.key)} className="text-center p-3 rounded-xl bg-[var(--bg-secondary)] cursor-pointer hover:bg-primary/10 transition-all">
             <div className="font-bold">{day.label}</div>
             <div className="text-xl">{Math.round(day.temp)}°</div>
             <div className="text-xs text-[var(--text-secondary)]">{Math.round(day.rain)} mm</div>
@@ -416,9 +414,9 @@ export function RelayCard({ relay, onToggle, onDelete }: { relay: Relay; onToggl
   return (
     <Card className="p-4">
       <div className="flex justify-between items-start mb-3">
-        <i className="fas fa-microchip text-2xl text-[#9CB080]"></i>
+        <i className="fas fa-microchip text-2xl text-primary"></i>
         <span className={`px-3 py-1 rounded-full text-sm ${relay.state ? 'bg-green-500/20 text-green-500' : 'bg-gray-500/20 text-gray-400'}`}>
-          <i className={`fas ${relay.state ? 'fa-power-off' : 'fa-power-off'}`}></i> {relay.state ? 'روشن' : 'خاموش'}
+          <i className="fas fa-power-off"></i> {relay.state ? 'روشن' : 'خاموش'}
         </span>
       </div>
       <h4 className="text-xl font-bold mb-1">{relay.name}</h4>
@@ -450,7 +448,7 @@ export function RuleCard({ rule, relayName, onToggle, onDelete }: { rule: Automa
   return (
     <Card className="p-4">
       <div className="flex justify-between items-start mb-2">
-        <i className={`fas ${rule.condition_type === 'and' ? 'fa-code-branch' : rule.rule_type === 'schedule' ? 'fa-clock' : 'fa-tint'} text-xl text-[#9CB080]`}></i>
+        <i className={`fas ${rule.condition_type === 'and' ? 'fa-code-branch' : rule.rule_type === 'schedule' ? 'fa-clock' : 'fa-tint'} text-xl text-primary`}></i>
         <span className={`px-2 py-1 rounded-full text-xs ${rule.active ? 'bg-green-500/20 text-green-500' : 'bg-gray-500/20 text-gray-400'}`}>
           {rule.active ? 'فعال' : 'غیرفعال'}
         </span>
@@ -480,7 +478,7 @@ export function AlertRuleCard({ rule, onToggle, onDelete }: { rule: AlertRule; o
   return (
     <Card className="p-4">
       <div className="flex justify-between items-start mb-2">
-        <i className="fas fa-bell text-xl text-[#9CB080]"></i>
+        <i className="fas fa-bell text-xl text-primary"></i>
         <span className={`px-2 py-1 rounded-full text-xs ${rule.enabled ? 'bg-green-500/20 text-green-500' : 'bg-gray-500/20 text-gray-400'}`}>
           {rule.enabled ? 'فعال' : 'غیرفعال'}
         </span>
