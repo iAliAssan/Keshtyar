@@ -1,0 +1,207 @@
+{% extends "base.html" %}
+
+{% block title %}مدیریت رله‌ها - دستیار هوشمند کشاورزی{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="d-flex flex-wrap justify-content-between align-items-center">
+            <h3 class="mb-3 mb-md-0">
+                <i class="fas fa-plug text-primary"></i> مدیریت رله‌ها
+            </h3>
+            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addRelayModal">
+                <i class="fas fa-plus"></i> افزودن رله جدید
+            </button>
+        </div>
+        <p class="text-muted mt-2">
+            <i class="fas fa-info-circle"></i>
+            رله‌ها دستگاه‌های فیزیکی متصل به ESP32 هستند. می‌توانید آن‌ها را به صورت دستی روشن/خاموش کنید.
+            فقط GPIOهای مجاز: <strong>12, 13, 14, 15</strong>
+        </p>
+    </div>
+</div>
+
+<!-- Relays List -->
+<div class="row g-3">
+    {% if relays %}
+        {% for relay in relays %}
+        <div class="col-md-6 col-lg-4">
+            <div class="card relay-card h-100 border-0 shadow-sm rounded-4">
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <div class="relay-icon">
+                            <i class="fas fa-microchip fa-2x" style="color: #9CB080;"></i>
+                        </div>
+                        <div class="relay-status">
+                            {% if relay.state %}
+                                <span class="badge bg-success px-3 py-2">
+                                    <i class="fas fa-power-off"></i> روشن
+                                </span>
+                            {% else %}
+                                <span class="badge bg-secondary px-3 py-2">
+                                    <i class="fas fa-power-off"></i> خاموش
+                                </span>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <h4 class="mb-2">{{ relay.name }}</h4>
+                    <p class="text-muted small mb-3">
+                        <i class="fas fa-microchip"></i> GPIO: {{ relay.gpio }}
+                    </p>
+
+                    <div class="d-flex gap-2 mt-3">
+                        <a href="{{ url_for('toggle_relay', relay_id=relay.id) }}"
+                           class="btn btn-{{ 'warning' if relay.state else 'success' }} flex-grow-1">
+                            <i class="fas fa-{{ 'toggle-off' if relay.state else 'toggle-on' }}"></i>
+                            {{ 'خاموش کردن' if relay.state else 'روشن کردن' }}
+                        </a>
+                        <a href="{{ url_for('delete_relay', relay_id=relay.id) }}"
+                           class="btn btn-outline-danger"
+                           onclick="return confirm('آیا از حذف رله «{{ relay.name }}» اطمینان دارید؟')">
+                            <i class="fas fa-trash"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="col-12">
+            <div class="empty-state text-center py-5">
+                <i class="fas fa-plug fa-4x text-muted mb-3"></i>
+                <h5>هیچ رله‌ای تعریف نشده است</h5>
+                <p class="text-muted">برای شروع، اولین رله خود را اضافه کنید.</p>
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addRelayModal">
+                    <i class="fas fa-plus"></i> افزودن رله
+                </button>
+            </div>
+        </div>
+    {% endif %}
+</div>
+
+<!-- Add Relay Modal -->
+<div class="modal fade" id="addRelayModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4">
+            <div class="modal-header border-0">
+                <h5 class="modal-title">
+                    <i class="fas fa-plus-circle text-primary"></i> افزودن رله جدید
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('add_relay') }}">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="name" class="form-label">
+                            <i class="fas fa-tag"></i> نام رله
+                        </label>
+                        <input type="text" class="form-control form-control-lg"
+                               id="name" name="name"
+                               placeholder="مثال: پمپ آبیاری، فن گلخانه، چراغ باغچه"
+                               required>
+                        <div class="form-text">یک نام توصیفی برای این رله انتخاب کنید.</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="gpio" class="form-label">
+                            <i class="fas fa-microchip"></i> شماره GPIO
+                        </label>
+                        <select class="form-select form-select-lg" id="gpio" name="gpio" required>
+                            <option value="" disabled selected>انتخاب کنید...</option>
+                            <option value="12">GPIO 12</option>
+                            <option value="13">GPIO 13</option>
+                            <option value="14">GPIO 14</option>
+                            <option value="15">GPIO 15</option>
+                        </select>
+                        <div class="form-text">
+                            پایه GPIO روی ESP32 که رله به آن متصل است. فقط مقادیر ۱۲، ۱۳، ۱۴، ۱۵ مجاز هستند.
+                        </div>
+                    </div>
+
+                    <div class="alert alert-info small">
+                        <i class="fas fa-lightbulb"></i>
+                        <strong>نکته:</strong> پس از افزودن رله، می‌توانید برای آن قوانین اتوماسیون تعریف کنید.
+                    </div>
+                </div>
+                <div class="modal-footer border-0">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times"></i> انصراف
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> ذخیره رله
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Guide Card -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card border-0 bg-light rounded-4">
+            <div class="card-body">
+                <h6 class="mb-2">
+                    <i class="fas fa-question-circle text-primary"></i> راهنمای رله‌ها
+                </h6>
+                <p class="small text-muted mb-0">
+                    رله‌ها دستگاه‌هایی هستند که جریان برق تجهیزات مزرعه (پمپ، فن، شیر برقی و ...) را کنترل می‌کنند.
+                    هر رله به یک پایه GPIO روی برد ESP32 متصل می‌شود. شما می‌توانید رله را به صورت دستی از این صفحه
+                    روشن/خاموش کنید یا قوانین اتوماسیون تعریف کنید تا به صورت خودکار بر اساس رطوبت خاک یا زمان عمل کند.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.relay-card {
+    transition: all 0.3s ease;
+    cursor: default;
+}
+.relay-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 35px rgba(0,0,0,0.1) !important;
+}
+.relay-icon {
+    width: 50px;
+    height: 50px;
+    background: rgba(156, 176, 128, 0.1);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.btn-success {
+    background: #28a745;
+    transition: all 0.3s ease;
+}
+.btn-success:hover {
+    background: #1e7e34;
+    transform: translateY(-2px);
+}
+.btn-warning {
+    background: #ffc107;
+    border-color: #ffc107;
+    transition: all 0.3s ease;
+}
+.btn-warning:hover {
+    background: #e0a800;
+    transform: translateY(-2px);
+}
+.empty-state {
+    background: #f8f9fa;
+    border-radius: 20px;
+}
+.modal-content {
+    border: none;
+}
+.form-control:focus, .form-select:focus {
+    border-color: #9CB080;
+    box-shadow: 0 0 0 0.2rem rgba(156, 176, 128, 0.25);
+}
+</style>
+{% endblock %}

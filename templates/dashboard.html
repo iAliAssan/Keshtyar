@@ -1,0 +1,411 @@
+{% extends "base.html" %}
+
+{% block title %}داشبورد - دستیار هوش‌مند کشاورزی{% endblock %}
+
+{% block content %}
+<!-- Header Welcome -->
+<div class="row mb-4 fade-in-up">
+    <div class="col-12">
+        <div class="welcome-card p-4 rounded-4">
+            <h2 class="mb-1">
+                <i class="fas fa-tractor"></i>
+                خوش آمدید، {{ current_user.farm_name }}
+            </h2>
+            <p class="text-muted mb-0">
+                <i class="fas fa-calendar-alt"></i>
+                {{ now_tehran().strftime('%Y-%m-%d %H:%M:%S') if now_tehran else '---' }}
+            </p>
+        </div>
+    </div>
+</div>
+
+<!-- Status Cards -->
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+        <div class="stat-card temp-card p-3 rounded-4 text-center">
+            <i class="fas fa-thermometer-half fa-2x mb-2"></i>
+            <h5 class="text-muted mb-1">دما</h5>
+            <h2 class="mb-0">
+                {{ "%.1f"|format(current_data.temperature) if current_data.temperature else "---" }}
+                <small>°C</small>
+            </h2>
+        </div>
+    </div>
+
+    <div class="col-6 col-md-3">
+        <div class="stat-card humidity-card p-3 rounded-4 text-center">
+            <i class="fas fa-tint fa-2x mb-2"></i>
+            <h5 class="text-muted mb-1">رطوبت هوا</h5>
+            <h2 class="mb-0">
+                {{ "%.1f"|format(current_data.humidity) if current_data.humidity else "---" }}
+                <small>%</small>
+            </h2>
+        </div>
+    </div>
+
+    <div class="col-6 col-md-3">
+        <div class="stat-card soil-card p-3 rounded-4 text-center">
+            <i class="fas fa-seedling fa-2x mb-2"></i>
+            <h5 class="text-muted mb-1">رطوبت خاک</h5>
+            <h2 class="mb-0">
+                {{ "%.1f"|format(current_data.soil_moisture) if current_data.soil_moisture else "---" }}
+                <small>%</small>
+            </h2>
+        </div>
+    </div>
+
+    <div class="col-6 col-md-3">
+        <div class="stat-card tank-card p-3 rounded-4 text-center">
+            <i class="fas fa-water fa-2x mb-2"></i>
+            <h5 class="text-muted mb-1">سطح تانک</h5>
+            <h2 class="mb-0">
+                {{ "%.1f"|format(current_data.tank_level) if current_data.tank_level else "---" }}
+                <small>%</small>
+            </h2>
+            <small class="text-muted">
+                {{ "{:,.0f}".format(current_data.tank_liters) if current_data.tank_liters else "0" }} لیتر
+            </small>
+        </div>
+    </div>
+</div>
+
+<!-- Farm Status & Irrigation Recommendation -->
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="card h-100 border-0 shadow-sm rounded-4 fade-in-up">
+            <div class="card-body text-center">
+                <i class="fas fa-chart-line fa-2x mb-2 text-muted"></i>
+                <h5 class="text-muted mb-2">وضعیت مزرعه</h5>
+                <div class="status-badge status-{{ farm_status }} p-3 rounded-3">
+                    <h3 class="mb-0">{{ farm_status_text }}</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-8">
+        <div class="card h-100 border-0 shadow-sm rounded-4 fade-in-up">
+            <div class="card-body">
+                <h5 class="text-muted mb-3">
+                    <i class="fas fa-tint"></i> توصیه آبیاری
+                </h5>
+                <p class="recommendation-text lead mb-0">{{ irrigation_rec }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Weather Forecast with Hourly -->
+<div class="row g-3 mb-4">
+    <div class="col-md-12">
+        <div class="card border-0 shadow-sm rounded-4 fade-in-up">
+            <div class="card-header bg-transparent border-0 pt-3 d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="fas fa-cloud-sun"></i> پیش‌بینی آب و هوا</h5>
+                <small class="text-muted">برای مشاهده جزئیات ساعتی روی هر روز کلیک کنید</small>
+            </div>
+            <div class="card-body">
+                {% if forecast %}
+                    <div class="weather-current text-center mb-4">
+                        <i class="fas fa-sun fa-2x text-warning"></i>
+                        <h3 class="mb-0">{{ "%.1f"|format(forecast.current.temperature) }}°C</h3>
+                        <div class="d-flex justify-content-center gap-3 mt-2">
+                            <small><i class="fas fa-tint"></i> رطوبت: {{ "%.0f"|format(forecast.current.humidity|default(0)) }}%</small>
+                            <small><i class="fas fa-cloud-rain"></i> باران: {{ forecast.current.rain }} mm</small>
+                            <small><i class="fas fa-wind"></i> باد: {{ forecast.current.wind }} km/h</small>
+                            <small><i class="fas fa-sun"></i> UV: {{ forecast.current.uv_index }}</small>
+                        </div>
+                    </div>
+
+                    <div class="row text-center mb-4">
+                        <div class="col-4">
+                            <div class="p-2 rounded-3 bg-light day-card" data-day="today">
+                                <i class="fas fa-calendar-day"></i>
+                                <div class="fw-bold">امروز</div>
+                                <strong>{{ "%.0f"|format(forecast.today.temp_max) }}°</strong>
+                                <small class="text-muted d-block">{{ "%.0f"|format(forecast.today.rain) }} mm</small>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="p-2 rounded-3 bg-light day-card" data-day="tomorrow">
+                                <i class="fas fa-calendar-day"></i>
+                                <div class="fw-bold">فردا</div>
+                                <strong>{{ "%.0f"|format(forecast.tomorrow.temp_max) }}°</strong>
+                                <small class="text-muted d-block">{{ "%.0f"|format(forecast.tomorrow.rain) }} mm</small>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="p-2 rounded-3 bg-light day-card" data-day="next3">
+                                <i class="fas fa-calendar-week"></i>
+                                <div class="fw-bold">۳ روز آینده</div>
+                                <strong>{{ "%.0f"|format(forecast.next_3_days.temp_max) }}°</strong>
+                                <small class="text-muted d-block">{{ "%.0f"|format(forecast.next_3_days.total_rain) }} mm</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="hourlyForecastContainer" class="mt-3">
+                        <div class="text-center text-muted py-3">
+                            <i class="fas fa-info-circle"></i> روی هر روز کلیک کنید تا پیش‌بینی ساعتی نمایش داده شود.
+                        </div>
+                    </div>
+                {% else %}
+                    <div class="text-center text-muted">
+                        <i class="fas fa-cloud-meatball fa-2x"></i>
+                        <p class="mt-2">دریافت اطلاعات آب و هوا امکان‌پذیر نیست</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Soil Moisture Chart -->
+<div class="row g-3 mb-4">
+    <div class="col-12">
+        <div class="card border-0 shadow-sm rounded-4 fade-in-up">
+            <div class="card-header bg-transparent border-0 pt-3">
+                <h5 class="mb-0"><i class="fas fa-chart-line"></i> تغییرات رطوبت خاک (۲۴ ساعت گذشته)</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="soilChart" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Stats -->
+<div class="row g-3">
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm rounded-4 fade-in-up">
+            <div class="card-body text-center">
+                <i class="fas fa-microchip fa-2x text-primary mb-2"></i>
+                <h6 class="text-muted">وضعیت اتصال دستگاه</h6>
+                {% if current_data.temperature %}
+                    <span class="badge bg-success p-2">متصل</span>
+                    <small class="d-block text-muted mt-2">آخرین بروزرسانی: لحظه‌ای</small>
+                {% else %}
+                    <span class="badge bg-warning p-2">در انتظار داده</span>
+                    <small class="d-block text-muted mt-2">هنوز داده‌ای دریافت نشده</small>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm rounded-4 fade-in-up">
+            <div class="card-body text-center">
+                <i class="fas fa-tachometer-alt fa-2x text-info mb-2"></i>
+                <h6 class="text-muted">مصرف آب روزانه</h6>
+                <h4 class="mb-0">---</h4>
+                <small class="text-muted">لیتر در روز</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm rounded-4 fade-in-up">
+            <div class="card-body text-center">
+                <i class="fas fa-bell fa-2x text-warning mb-2"></i>
+                <h6 class="text-muted">قوانین هشدار فعال</h6>
+                <h4 class="mb-0">---</h4>
+                <small class="text-muted">هشدار فعال</small>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Soil Moisture Chart
+    const chartData = {{ chart_data|tojson }};
+    const ctx = document.getElementById('soilChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: chartData.timestamps || [],
+            datasets: [{
+                label: 'رطوبت خاک (%)',
+                data: chartData.soil_moisture || [],
+                borderColor: '#9CB080',
+                backgroundColor: 'rgba(156, 176, 128, 0.1)',
+                tension: 0.3,
+                fill: true,
+                pointRadius: 3,
+                pointHoverRadius: 6
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: { position: 'top', rtl: true },
+                tooltip: { rtl: true }
+            },
+            scales: {
+                y: { beginAtZero: true, max: 100, title: { display: true, text: 'رطوبت خاک (%)' } },
+                x: { title: { display: true, text: 'زمان' }, ticks: { maxRotation: 45, minRotation: 45 } }
+            }
+        }
+    });
+
+    // Hourly forecast functionality
+    let hourlyData = null;
+
+    function fetchHourlyForecast() {
+        fetch('/api/hourly_forecast')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    hourlyData = data.data;
+                } else {
+                    console.error('Failed to load hourly forecast');
+                }
+            })
+            .catch(error => console.error('Error:', error));
+    }
+
+    function showHourlyForDay(dayKey) {
+        const container = document.getElementById('hourlyForecastContainer');
+        if (!hourlyData) {
+            container.innerHTML = '<div class="text-center text-muted py-3">در حال بارگذاری اطلاعات...</div>';
+            return;
+        }
+
+        let dayDate = null;
+        if (dayKey === 'today') {
+            const today = new Date();
+            dayDate = today.toISOString().slice(0,10);
+        } else if (dayKey === 'tomorrow') {
+            const tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            dayDate = tomorrow.toISOString().slice(0,10);
+        } else if (dayKey === 'next3') {
+            const day3 = new Date();
+            day3.setDate(day3.getDate() + 2);
+            dayDate = day3.toISOString().slice(0,10);
+        }
+
+        if (!dayDate || !hourlyData[dayDate]) {
+            container.innerHTML = '<div class="text-center text-muted py-3">اطلاعات ساعتی برای این روز موجود نیست.</div>';
+            return;
+        }
+
+        const hours = hourlyData[dayDate];
+        let html = '<div class="hourly-table"><h6 class="mb-2">پیش‌بینی ساعتی</h6><div class="row g-2">';
+        const filtered = hours.filter(item => {
+            const hour = parseInt(item.time.split(':')[0]);
+            return hour % 3 === 0;
+        });
+        filtered.forEach(item => {
+            html += `
+                <div class="col-3 col-md-2">
+                    <div class="p-2 bg-light rounded-3 text-center">
+                        <small>${item.time}</small><br>
+                        <strong>${item.temp}°</strong><br>
+                        <small class="text-muted"><i class="fas fa-tint"></i> ${item.humidity}%</small>
+                    </div>
+                </div>
+            `;
+        });
+        html += '</div></div>';
+        container.innerHTML = html;
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        fetchHourlyForecast();
+        const dayCards = document.querySelectorAll('.day-card');
+        dayCards.forEach(card => {
+            card.style.cursor = 'pointer';
+            card.addEventListener('click', function() {
+                const day = this.getAttribute('data-day');
+                showHourlyForDay(day);
+                // highlight selected day - use custom class to avoid dark mode issues
+                dayCards.forEach(c => c.classList.remove('selected-day'));
+                this.classList.add('selected-day');
+            });
+        });
+    });
+</script>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.welcome-card {
+    background: linear-gradient(135deg, #9CB080 0%, #7a8f60 100%);
+    color: white;
+}
+.welcome-card .text-muted { color: rgba(255,255,255,0.8) !important; }
+.stat-card {
+    background: white;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    cursor: default;
+}
+.stat-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+}
+.temp-card i { color: #ff6b6b; }
+.humidity-card i { color: #4dabf7; }
+.soil-card i { color: #9CB080; }
+.tank-card i { color: #339af0; }
+.status-badge { font-weight: bold; transition: all 0.3s ease; }
+.status-excellent { background: #d4edda; color: #155724; }
+.status-good { background: #d1ecf1; color: #0c5460; }
+.status-warning { background: #fff3cd; color: #856404; }
+.status-critical { background: #f8d7da; color: #721c24; }
+.recommendation-text { font-size: 1.1rem; line-height: 1.8; color: #2d3748; }
+.weather-current {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-radius: 16px;
+    padding: 15px;
+}
+.day-card {
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+.day-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+/* Selected day style for light mode */
+.day-card.selected-day {
+    background-color: #9CB080;
+    color: white;
+}
+.day-card.selected-day .text-muted {
+    color: rgba(255,255,255,0.8) !important;
+}
+/* Dark mode adjustments for selected day */
+body.dark-mode .day-card.selected-day {
+    background-color: #6b8c5e;
+    color: white;
+}
+.hourly-table {
+    background: #f8f9fa;
+    border-radius: 16px;
+    padding: 16px;
+}
+body.dark-mode .hourly-table {
+    background: #2a2a3e;
+}
+body.dark-mode .hourly-table .bg-light {
+    background: #1e1e2e !important;
+    color: #e0e0e0;
+}
+.fade-in-up {
+    animation: fadeInUp 0.5s ease-out;
+}
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+@media (max-width: 768px) {
+    .stat-card h2 { font-size: 1.3rem; }
+    .recommendation-text { font-size: 0.95rem; }
+}
+</style>
+{% endblock %}

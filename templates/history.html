@@ -1,0 +1,335 @@
+{% extends "base.html" %}
+
+{% block title %}تاریخچه داده‌ها - دستیار هوشمند کشاورزی{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="d-flex flex-wrap justify-content-between align-items-center">
+            <h3 class="mb-3 mb-md-0">
+                <i class="fas fa-chart-line text-primary"></i> تاریخچه داده‌های مزرعه
+            </h3>
+            <div class="btn-group" role="group">
+                <a href="{{ url_for('history', days=1) }}"
+                   class="btn btn-outline-primary {{ 'active' if days == 1 else '' }}">
+                    <i class="fas fa-calendar-day"></i> ۲۴ ساعت
+                </a>
+                <a href="{{ url_for('history', days=7) }}"
+                   class="btn btn-outline-primary {{ 'active' if days == 7 else '' }}">
+                    <i class="fas fa-calendar-week"></i> ۷ روز
+                </a>
+                <a href="{{ url_for('history', days=30) }}"
+                   class="btn btn-outline-primary {{ 'active' if days == 30 else '' }}">
+                    <i class="fas fa-calendar-alt"></i> ۳۰ روز
+                </a>
+            </div>
+        </div>
+        <p class="text-muted mt-2">
+            <i class="fas fa-info-circle"></i>
+            نمایش روند تغییرات رطوبت خاک، دما و سطح تانک در بازه‌های زمانی مختلف
+        </p>
+    </div>
+</div>
+
+<!-- Soil Moisture Chart -->
+<div class="row g-3 mb-4">
+    <div class="col-12">
+        <div class="card border-0 shadow-sm rounded-4">
+            <div class="card-header bg-transparent border-0 pt-3">
+                <h5 class="mb-0">
+                    <i class="fas fa-seedling" style="color: #9CB080;"></i>
+                    نمودار رطوبت خاک
+                </h5>
+            </div>
+            <div class="card-body">
+                <canvas id="soilChart" height="250"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Temperature Chart -->
+<div class="row g-3 mb-4">
+    <div class="col-12">
+        <div class="card border-0 shadow-sm rounded-4">
+            <div class="card-header bg-transparent border-0 pt-3">
+                <h5 class="mb-0">
+                    <i class="fas fa-thermometer-half text-danger"></i>
+                    نمودار دما
+                </h5>
+            </div>
+            <div class="card-body">
+                <canvas id="tempChart" height="250"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Tank Level Chart -->
+<div class="row g-3 mb-4">
+    <div class="col-12">
+        <div class="card border-0 shadow-sm rounded-4">
+            <div class="card-header bg-transparent border-0 pt-3">
+                <h5 class="mb-0">
+                    <i class="fas fa-water text-info"></i>
+                    نمودار سطح تانک
+                </h5>
+            </div>
+            <div class="card-body">
+                <canvas id="tankChart" height="250"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Summary Statistics -->
+<div class="row g-3">
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm rounded-4">
+            <div class="card-body text-center">
+                <i class="fas fa-chart-line fa-2x text-primary mb-2"></i>
+                <h6 class="text-muted">میانگین رطوبت خاک</h6>
+                <h3 id="avgSoil" class="mb-0">---</h3>
+                <small class="text-muted">درصد</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm rounded-4">
+            <div class="card-body text-center">
+                <i class="fas fa-thermometer-half fa-2x text-danger mb-2"></i>
+                <h6 class="text-muted">میانگین دما</h6>
+                <h3 id="avgTemp" class="mb-0">---</h3>
+                <small class="text-muted">درجه سانتی‌گراد</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm rounded-4">
+            <div class="card-body text-center">
+                <i class="fas fa-water fa-2x text-info mb-2"></i>
+                <h6 class="text-muted">میانگین سطح تانک</h6>
+                <h3 id="avgTank" class="mb-0">---</h3>
+                <small class="text-muted">درصد</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Data Table -->
+<div class="row g-3 mt-2">
+    <div class="col-12">
+        <div class="card border-0 shadow-sm rounded-4">
+            <div class="card-header bg-transparent border-0 pt-3">
+                <h5 class="mb-0">
+                    <i class="fas fa-table"></i>
+                    جزئیات داده‌ها
+                </h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive" style="max-height: 400px;">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light sticky-top">
+                            <tr>
+                                <th>زمان</th>
+                                <th>دما (°C)</th>
+                                <th>رطوبت هوا (%)</th>
+                                <th>رطوبت خاک (%)</th>
+                                <th>سطح تانک (%)</th>
+                                <th>آب تانک (لیتر)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="dataTableBody">
+                            <tr>
+                                <td colspan="6" class="text-center text-muted">
+                                    <i class="fas fa-spinner fa-spin"></i> در حال بارگذاری...
+                                 </td>
+                             </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const chartData = {{ chart_data|tojson }};
+    const days = {{ days }};
+
+    // Helper function to calculate average
+    function calculateAverage(arr) {
+        if (!arr || arr.length === 0) return 0;
+        const validValues = arr.filter(v => v !== null && v !== undefined);
+        if (validValues.length === 0) return 0;
+        const sum = validValues.reduce((a, b) => a + b, 0);
+        return sum / validValues.length;
+    }
+
+    // Update summary statistics
+    const avgSoil = calculateAverage(chartData.soil_moisture);
+    const avgTemp = calculateAverage(chartData.temperature);
+    const avgTank = calculateAverage(chartData.tank_level);
+
+    document.getElementById('avgSoil').innerHTML = avgSoil.toFixed(1);
+    document.getElementById('avgTemp').innerHTML = avgTemp.toFixed(1);
+    document.getElementById('avgTank').innerHTML = avgTank.toFixed(1);
+
+    // Soil Moisture Chart
+    const soilCtx = document.getElementById('soilChart').getContext('2d');
+    new Chart(soilCtx, {
+        type: 'line',
+        data: {
+            labels: chartData.timestamps || [],
+            datasets: [{
+                label: 'رطوبت خاک (%)',
+                data: chartData.soil_moisture || [],
+                borderColor: '#9CB080',
+                backgroundColor: 'rgba(156, 176, 128, 0.1)',
+                tension: 0.3,
+                fill: true,
+                pointRadius: days === 1 ? 4 : 2,
+                pointHoverRadius: 6
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: { position: 'top', rtl: true },
+                tooltip: { rtl: true, mode: 'index', intersect: false }
+            },
+            scales: {
+                y: { beginAtZero: true, max: 100, title: { display: true, text: 'رطوبت خاک (%)' } },
+                x: { title: { display: true, text: 'زمان' }, ticks: { maxRotation: 45, minRotation: 45, autoSkip: true, maxTicksLimit: 10 } }
+            }
+        }
+    });
+
+    // Temperature Chart
+    const tempCtx = document.getElementById('tempChart').getContext('2d');
+    new Chart(tempCtx, {
+        type: 'line',
+        data: {
+            labels: chartData.timestamps || [],
+            datasets: [{
+                label: 'دما (°C)',
+                data: chartData.temperature || [],
+                borderColor: '#dc3545',
+                backgroundColor: 'rgba(220, 53, 69, 0.1)',
+                tension: 0.3,
+                fill: true,
+                pointRadius: days === 1 ? 4 : 2,
+                pointHoverRadius: 6
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: { position: 'top', rtl: true },
+                tooltip: { rtl: true, mode: 'index', intersect: false }
+            },
+            scales: {
+                y: { title: { display: true, text: 'دما (°C)' } },
+                x: { title: { display: true, text: 'زمان' }, ticks: { maxRotation: 45, minRotation: 45, autoSkip: true, maxTicksLimit: 10 } }
+            }
+        }
+    });
+
+    // Tank Level Chart
+    const tankCtx = document.getElementById('tankChart').getContext('2d');
+    new Chart(tankCtx, {
+        type: 'line',
+        data: {
+            labels: chartData.timestamps || [],
+            datasets: [{
+                label: 'سطح تانک (%)',
+                data: chartData.tank_level || [],
+                borderColor: '#17a2b8',
+                backgroundColor: 'rgba(23, 162, 184, 0.1)',
+                tension: 0.3,
+                fill: true,
+                pointRadius: days === 1 ? 4 : 2,
+                pointHoverRadius: 6
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: { position: 'top', rtl: true },
+                tooltip: { rtl: true, mode: 'index', intersect: false }
+            },
+            scales: {
+                y: { beginAtZero: true, max: 100, title: { display: true, text: 'سطح تانک (%)' } },
+                x: { title: { display: true, text: 'زمان' }, ticks: { maxRotation: 45, minRotation: 45, autoSkip: true, maxTicksLimit: 10 } }
+            }
+        }
+    });
+
+    // Populate data table
+    function populateTable() {
+        const tbody = document.getElementById('dataTableBody');
+        if (!chartData.timestamps || chartData.timestamps.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">هیچ داده‌ای موجود نیست</td></tr>';
+            return;
+        }
+
+        let html = '';
+        const records = chartData.timestamps.length;
+        const startIndex = Math.max(0, records - 50);
+
+        for (let i = startIndex; i < records; i++) {
+            const tankLiters = (chartData.tank_level[i] !== null && chartData.tank_level[i] !== undefined)
+                ? Math.round(chartData.tank_level[i] / 100 * 10000) : '---'; // approximate, real value not in chartData
+            html += `
+                <tr>
+                    <td>${chartData.timestamps[i]}</td>
+                    <td>${chartData.temperature[i] !== null ? chartData.temperature[i].toFixed(1) : '---'}</td>
+                    <td>---</td>
+                    <td>${chartData.soil_moisture[i] !== null ? chartData.soil_moisture[i].toFixed(1) : '---'}</td>
+                    <td>${chartData.tank_level[i] !== null ? chartData.tank_level[i].toFixed(1) : '---'}</td>
+                    <td>${tankLiters !== '---' ? tankLiters.toLocaleString() : '---'}</td>
+                </tr>
+            `;
+        }
+        tbody.innerHTML = html;
+    }
+
+    populateTable();
+</script>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.btn-group .btn.active {
+    background: #9CB080;
+    border-color: #9CB080;
+    color: white;
+}
+.btn-group .btn-outline-primary {
+    color: #9CB080;
+    border-color: #9CB080;
+}
+.btn-group .btn-outline-primary:hover {
+    background: #9CB080;
+    border-color: #9CB080;
+    color: white;
+}
+.table-responsive {
+    border-radius: 0 0 16px 16px;
+}
+.table th {
+    background: #f8f9fa;
+    font-weight: 600;
+}
+.sticky-top {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+</style>
+{% endblock %}

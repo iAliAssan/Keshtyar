@@ -1,0 +1,389 @@
+{% extends "base.html" %}
+
+{% block title %}ثبت‌نام - دستیار هوشمند کشاورزی{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center min-vh-100 align-items-center py-4">
+    <div class="col-md-8 col-lg-7 col-xl-6">
+        <div class="card shadow-lg border-0 rounded-4 fade-in-up">
+            <div class="card-header bg-transparent text-center pt-4 pb-0 border-0">
+                <div class="mb-3">
+                    <i class="fas fa-user-plus fa-3x" style="color: #9CB080;"></i>
+                </div>
+                <h3 class="mb-0">ثبت‌نام در سامانه</h3>
+                <p class="text-muted mt-2">لطفاً اطلاعات زیر را وارد کنید</p>
+            </div>
+
+            <div class="card-body p-4">
+                <!-- Tab Navigation - بهبود فاصله و اندازه متن -->
+                <ul class="nav nav-pills nav-justified mb-5" id="registerTab" role="tablist" style="gap: 12px;">
+                    <li class="nav-item" role="presentation" style="flex: 1;">
+                        <button class="nav-link active" id="tab1-tab" data-bs-toggle="pill" data-bs-target="#tab1" type="button" role="tab">
+                            <div class="step-number small text-muted mb-1">مرحله 1</div>
+                            <div class="step-title fw-bold">کد یکتا</div>
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation" style="flex: 1;">
+                        <button class="nav-link" id="tab2-tab" data-bs-toggle="pill" data-bs-target="#tab2" type="button" role="tab" disabled>
+                            <div class="step-number small text-muted mb-1">مرحله 2</div>
+                            <div class="step-title fw-bold">اطلاعات مزرعه</div>
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation" style="flex: 1;">
+                        <button class="nav-link" id="tab3-tab" data-bs-toggle="pill" data-bs-target="#tab3" type="button" role="tab" disabled>
+                            <div class="step-number small text-muted mb-1">مرحله 3</div>
+                            <div class="step-title fw-bold">موقعیت مکانی</div>
+                        </button>
+                    </li>
+                </ul>
+
+                <!-- Tab Content -->
+                <form method="POST" action="{{ url_for('register') }}" id="registerForm">
+                    <div class="tab-content" id="registerTabContent">
+
+                        <!-- Tab 1: Device Code & Password -->
+                        <div class="tab-pane fade show active" id="tab1" role="tabpanel">
+                            <div class="mb-3">
+                                <label for="device_code" class="form-label">
+                                    <i class="fas fa-qrcode text-primary"></i> کد یکتا دستگاه <span class="text-danger">*</span>
+                                </label>
+                                <input type="text" class="form-control form-control-lg"
+                                       id="device_code" name="device_code"
+                                       placeholder="مثال: A7B3F9G2"
+                                       dir="ltr" style="text-align: center; letter-spacing: 3px; font-family: monospace; font-size: 1.3rem;"
+                                       maxlength="8" required>
+                                <div class="form-text">کد ۸ رقمی که هنگام خرید دستگاه دریافت کرده‌اید.</div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="password" class="form-label">
+                                    <i class="fas fa-lock text-primary"></i> رمز عبور <span class="text-danger">*</span>
+                                </label>
+                                <input type="password" class="form-control form-control-lg"
+                                       id="password" name="password"
+                                       placeholder="حداقل ۴ کاراکتر" required>
+                            </div>
+
+                            <div class="mb-4">
+                                <label for="password_confirm" class="form-label">
+                                    <i class="fas fa-check-circle text-primary"></i> تکرار رمز عبور <span class="text-danger">*</span>
+                                </label>
+                                <input type="password" class="form-control form-control-lg"
+                                       id="password_confirm" name="password_confirm" required>
+                            </div>
+
+                            <button type="button" class="btn btn-primary btn-lg w-100" id="nextToTab2">
+                                مرحله بعد <i class="fas fa-arrow-left"></i>
+                            </button>
+                        </div>
+
+                        <!-- Tab 2: Farm Info -->
+                        <div class="tab-pane fade" id="tab2" role="tabpanel">
+                            <div class="mb-3">
+                                <label for="farm_name" class="form-label">
+                                    <i class="fas fa-tractor text-primary"></i> نام مزرعه
+                                </label>
+                                <input type="text" class="form-control form-control-lg"
+                                       id="farm_name" name="farm_name"
+                                       placeholder="مثال: مزرعه آقای احمدی"
+                                       value="مزرعه من">
+                            </div>
+
+                            <div class="mb-4">
+                                <label for="phone_number" class="form-label">
+                                    <i class="fas fa-mobile-alt text-primary"></i> شماره موبایل (برای هشدارها)
+                                </label>
+                                <input type="tel" class="form-control form-control-lg"
+                                       id="phone_number" name="phone_number"
+                                       placeholder="مثال: 09123456789"
+                                       dir="ltr">
+                                <div class="form-text">هشدارهای مهم از طریق پیامک به این شماره ارسال می‌شود.</div>
+                            </div>
+
+                            <div class="d-flex gap-2">
+                                <button type="button" class="btn btn-outline-secondary" id="prevToTab1">
+                                    <i class="fas fa-arrow-right"></i> قبلی
+                                </button>
+                                <button type="button" class="btn btn-primary flex-grow-1" id="nextToTab3">
+                                    مرحله بعد <i class="fas fa-arrow-left"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Tab 3: Location -->
+                        <div class="tab-pane fade" id="tab3" role="tabpanel">
+                            <div class="mb-3">
+                                <label class="form-label">
+                                    <i class="fas fa-map-marker-alt text-primary"></i> موقعیت مکانی مزرعه
+                                </label>
+                                <button type="button" class="btn btn-outline-success w-100 mb-3" id="getLocationBtn">
+                                    <i class="fas fa-crosshairs"></i> دریافت موقعیت خودکار
+                                </button>
+                                <div id="locationStatus" class="alert alert-info small d-none">
+                                    <i class="fas fa-spinner fa-spin"></i> در حال دریافت موقعیت...
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="latitude" class="form-label">
+                                        <i class="fas fa-arrow-up"></i> عرض جغرافیایی
+                                    </label>
+                                    <input type="text" class="form-control"
+                                           id="latitude" name="latitude"
+                                           placeholder="مثال: 35.6892"
+                                           value="{{ default_lat }}" dir="ltr">
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="longitude" class="form-label">
+                                        <i class="fas fa-arrow-right"></i> طول جغرافیایی
+                                    </label>
+                                    <input type="text" class="form-control"
+                                           id="longitude" name="longitude"
+                                           placeholder="مثال: 51.3890"
+                                           value="{{ default_lon }}" dir="ltr">
+                                </div>
+                            </div>
+
+                            <div id="locationMapPreview" class="text-center mb-3 d-none">
+                                <i class="fas fa-map-marked-alt fa-2x text-muted"></i>
+                                <p class="small text-muted">موقعیت انتخاب شده روی نقشه</p>
+                            </div>
+
+                            <div class="d-flex gap-2 mt-3">
+                                <button type="button" class="btn btn-outline-secondary" id="prevToTab2">
+                                    <i class="fas fa-arrow-right"></i> قبلی
+                                </button>
+                                <button type="submit" class="btn btn-success btn-lg flex-grow-1" id="submitRegister">
+                                    <i class="fas fa-check-circle"></i> ثبت‌نام نهایی
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+
+                <hr class="my-4">
+
+                <div class="text-center">
+                    <p class="text-muted small mb-0">
+                        قبلاً ثبت‌نام کرده‌اید؟
+                        <a href="{{ url_for('login') }}">وارد شوید</a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Tab navigation variables
+    let tab1 = document.getElementById('tab1-tab');
+    let tab2 = document.getElementById('tab2-tab');
+    let tab3 = document.getElementById('tab3-tab');
+    let nextToTab2 = document.getElementById('nextToTab2');
+    let nextToTab3 = document.getElementById('nextToTab3');
+    let prevToTab1 = document.getElementById('prevToTab1');
+    let prevToTab2 = document.getElementById('prevToTab2');
+
+    // Form fields
+    let deviceCode = document.getElementById('device_code');
+    let password = document.getElementById('password');
+    let passwordConfirm = document.getElementById('password_confirm');
+    let farmName = document.getElementById('farm_name');
+    let phoneNumber = document.getElementById('phone_number');
+    let latitude = document.getElementById('latitude');
+    let longitude = document.getElementById('longitude');
+
+    // Validation function for tab 1
+    function validateTab1() {
+        if (!deviceCode.value.trim()) {
+            alert('لطفاً کد یکتا دستگاه را وارد کنید.');
+            deviceCode.focus();
+            return false;
+        }
+        if (deviceCode.value.trim().length !== 8) {
+            alert('کد یکتا باید دقیقاً ۸ کاراکتر باشد.');
+            deviceCode.focus();
+            return false;
+        }
+        if (!password.value) {
+            alert('لطفاً رمز عبور را وارد کنید.');
+            password.focus();
+            return false;
+        }
+        if (password.value.length < 4) {
+            alert('رمز عبور باید حداقل ۴ کاراکتر باشد.');
+            password.focus();
+            return false;
+        }
+        if (password.value !== passwordConfirm.value) {
+            alert('رمز عبور و تکرار آن مطابقت ندارند.');
+            passwordConfirm.focus();
+            return false;
+        }
+        return true;
+    }
+
+    // Next to Tab 2
+    nextToTab2.addEventListener('click', function() {
+        if (validateTab1()) {
+            // Enable and show tab 2
+            tab2.disabled = false;
+            let tab2Tab = new bootstrap.Tab(tab2);
+            tab2Tab.show();
+        }
+    });
+
+    // Next to Tab 3
+    nextToTab3.addEventListener('click', function() {
+        tab3.disabled = false;
+        let tab3Tab = new bootstrap.Tab(tab3);
+        tab3Tab.show();
+    });
+
+    // Previous buttons
+    prevToTab1.addEventListener('click', function() {
+        let tab1Tab = new bootstrap.Tab(tab1);
+        tab1Tab.show();
+    });
+
+    prevToTab2.addEventListener('click', function() {
+        let tab2Tab = new bootstrap.Tab(tab2);
+        tab2Tab.show();
+    });
+
+    // Get location automatically
+    let getLocationBtn = document.getElementById('getLocationBtn');
+    let locationStatus = document.getElementById('locationStatus');
+
+    getLocationBtn.addEventListener('click', function() {
+        if (!navigator.geolocation) {
+            alert('مرورگر شما از دریافت موقعیت پشتیبانی نمی‌کند. لطفاً مختصات را دستی وارد کنید.');
+            return;
+        }
+
+        locationStatus.classList.remove('d-none');
+        locationStatus.innerHTML = '<i class="fas fa-spinner fa-spin"></i> در حال دریافت موقعیت...';
+
+        navigator.geolocation.getCurrentPosition(
+            function(position) {
+                latitude.value = position.coords.latitude.toFixed(6);
+                longitude.value = position.coords.longitude.toFixed(6);
+                locationStatus.classList.remove('alert-info');
+                locationStatus.classList.add('alert-success');
+                locationStatus.innerHTML = '<i class="fas fa-check-circle"></i> موقعیت با موفقیت دریافت شد.';
+                setTimeout(() => {
+                    locationStatus.classList.add('d-none');
+                    locationStatus.classList.remove('alert-success');
+                    locationStatus.classList.add('alert-info');
+                }, 3000);
+            },
+            function(error) {
+                let errorMsg = '';
+                switch(error.code) {
+                    case error.PERMISSION_DENIED:
+                        errorMsg = 'دسترسی به موقعیت مکانی رد شد. لطفاً مختصات را دستی وارد کنید.';
+                        break;
+                    case error.POSITION_UNAVAILABLE:
+                        errorMsg = 'اطلاعات موقعیت در دسترس نیست. لطفاً مختصات را دستی وارد کنید.';
+                        break;
+                    case error.TIMEOUT:
+                        errorMsg = 'زمان دریافت موقعیت به پایان رسید. لطفاً مختصات را دستی وارد کنید.';
+                        break;
+                    default:
+                        errorMsg = 'خطا در دریافت موقعیت. لطفاً مختصات را دستی وارد کنید.';
+                }
+                locationStatus.classList.remove('alert-info');
+                locationStatus.classList.add('alert-danger');
+                locationStatus.innerHTML = '<i class="fas fa-exclamation-triangle"></i> ' + errorMsg;
+                setTimeout(() => {
+                    locationStatus.classList.add('d-none');
+                    locationStatus.classList.remove('alert-danger');
+                    locationStatus.classList.add('alert-info');
+                }, 5000);
+            },
+            {
+                enableHighAccuracy: true,
+                timeout: 10000,
+                maximumAge: 0
+            }
+        );
+    });
+
+    // Auto-capitalize device code
+    deviceCode.addEventListener('input', function() {
+        this.value = this.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 8);
+    });
+</script>
+
+<style>
+    .nav-pills .nav-link {
+        border-radius: 16px;
+        padding: 12px 8px;
+        transition: all 0.3s ease;
+        background: #f0f0f0;
+        color: #555;
+    }
+    .nav-pills .nav-link.active {
+        background: #9CB080;
+        color: white;
+    }
+    .nav-pills .nav-link.active .step-number,
+    .nav-pills .nav-link.active .step-title {
+        color: white;
+    }
+    .nav-pills .nav-link.disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+    .step-number {
+        font-size: 0.7rem;
+        font-weight: normal;
+    }
+    .step-title {
+        font-size: 0.95rem;
+        font-weight: bold;
+    }
+    .btn-primary {
+        background: #9CB080;
+        border-color: #9CB080;
+        transition: all 0.3s ease;
+    }
+    .btn-primary:hover {
+        background: #7a8f60;
+        border-color: #7a8f60;
+        transform: translateY(-2px);
+    }
+    .btn-success {
+        background: #28a745;
+        transition: all 0.3s ease;
+    }
+    .btn-success:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(40, 167, 69, 0.3);
+    }
+    input:focus {
+        border-color: #9CB080;
+        box-shadow: 0 0 0 0.2rem rgba(156, 176, 128, 0.25);
+    }
+    .card {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+    }
+    .fade-in-up {
+        animation: fadeInUp 0.5s ease-out;
+    }
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+</style>
+{% endblock %}

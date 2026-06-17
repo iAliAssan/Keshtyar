@@ -1,0 +1,341 @@
+{% extends "base.html" %}
+
+{% block title %}قوانین هشدارها - دستیار هوشمند کشاورزی{% endblock %}
+
+{% block content %}
+<div class="row mb-4 fade-in-up">
+    <div class="col-12">
+        <div class="d-flex flex-wrap justify-content-between align-items-center">
+            <h3 class="mb-3 mb-md-0">
+                <i class="fas fa-bell text-primary"></i> قوانین هشدارهای SMS
+            </h3>
+            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addAlertRuleModal">
+                <i class="fas fa-plus"></i> افزودن قانون هشدار جدید
+            </button>
+        </div>
+        <p class="text-muted mt-2">
+            <i class="fas fa-info-circle"></i>
+            قوانین هشدار شرایطی را تعیین می‌کنند که در صورت بروز، پیامک هشدار به شماره موبایل ثبت‌شده در تنظیمات ارسال شود.
+            <strong>نکته:</strong> رطوبت خاک بر اساس مقادیر کالیبره شده به درصد تبدیل می‌شود.
+        </p>
+    </div>
+</div>
+
+<!-- Alert Rules List -->
+<div class="row g-3">
+    {% if alert_rules %}
+        {% for rule in alert_rules %}
+        <div class="col-md-6 col-lg-4">
+            <div class="card alert-rule-card h-100 border-0 shadow-sm rounded-4 fade-in-up">
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <div class="alert-rule-icon">
+                            {% if rule.sensor_type == 'soil_moisture' %}
+                                <i class="fas fa-seedling fa-2x" style="color: #9CB080;"></i>
+                            {% elif rule.sensor_type == 'temperature' %}
+                                <i class="fas fa-thermometer-half fa-2x text-danger"></i>
+                            {% else %}
+                                <i class="fas fa-water fa-2x text-info"></i>
+                            {% endif %}
+                        </div>
+                        <div class="alert-rule-status">
+                            {% if rule.enabled %}
+                                <span class="badge bg-success px-3 py-2">
+                                    <i class="fas fa-check-circle"></i> فعال
+                                </span>
+                            {% else %}
+                                <span class="badge bg-secondary px-3 py-2">
+                                    <i class="fas fa-ban"></i> غیرفعال
+                                </span>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <h5 class="mb-2">{{ rule.name }}</h5>
+
+                    <div class="alert-rule-details bg-light rounded-3 p-3 mt-3">
+                        <small class="text-muted d-block mb-2">
+                            <i class="fas fa-microchip"></i> نوع سنسور:
+                            <strong>
+                                {% if rule.sensor_type == 'soil_moisture' %}
+                                    رطوبت خاک
+                                {% elif rule.sensor_type == 'temperature' %}
+                                    دما
+                                {% else %}
+                                    سطح تانک
+                                {% endif %}
+                            </strong>
+                        </small>
+
+                        <small class="text-muted d-block mb-2">
+                            <i class="fas fa-chart-line"></i> شرط:
+                            <strong>
+                                {% if rule.operator == 'below' %}
+                                    کمتر از {{ rule.threshold }}
+                                    {% if rule.sensor_type == 'temperature' %}°C{% else %}%{% endif %}
+                                {% else %}
+                                    بیشتر از {{ rule.threshold }}
+                                    {% if rule.sensor_type == 'temperature' %}°C{% else %}%{% endif %}
+                                {% endif %}
+                            </strong>
+                        </small>
+
+                        <small class="text-muted d-block">
+                            <i class="fas fa-envelope"></i> متن پیامک:
+                        </small>
+                        <div class="alert-sms-preview small mt-1 p-2 rounded">
+                            {{ rule.sms_template }}
+                        </div>
+                    </div>
+
+                    <div class="d-flex gap-2 mt-3">
+                        <a href="{{ url_for('toggle_alert_rule', rule_id=rule.id) }}"
+                           class="btn btn-{{ 'warning' if rule.enabled else 'success' }} flex-grow-1">
+                            <i class="fas fa-{{ 'pause' if rule.enabled else 'play' }}"></i>
+                            {{ 'غیرفعال کردن' if rule.enabled else 'فعال کردن' }}
+                        </a>
+                        <a href="{{ url_for('delete_alert_rule', rule_id=rule.id) }}"
+                           class="btn btn-outline-danger"
+                           onclick="return confirm('آیا از حذف قانون هشدار «{{ rule.name }}» اطمینان دارید؟')">
+                            <i class="fas fa-trash"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="col-12">
+            <div class="empty-state text-center py-5 fade-in-up">
+                <i class="fas fa-bell fa-4x text-muted mb-3"></i>
+                <h5>هیچ قانون هشداری تعریف نشده است</h5>
+                <p class="text-muted">برای دریافت هشدارهای SMS، اولین قانون خود را اضافه کنید.</p>
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addAlertRuleModal">
+                    <i class="fas fa-plus"></i> افزودن قانون هشدار
+                </button>
+            </div>
+        </div>
+    {% endif %}
+</div>
+
+<!-- Add Alert Rule Modal -->
+<div class="modal fade" id="addAlertRuleModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content rounded-4">
+            <div class="modal-header border-0">
+                <h5 class="modal-title">
+                    <i class="fas fa-plus-circle text-primary"></i> افزودن قانون هشدار جدید
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('add_alert_rule') }}">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="name" class="form-label">
+                            <i class="fas fa-tag"></i> نام قانون
+                        </label>
+                        <input type="text" class="form-control" id="name" name="name"
+                               placeholder="مثال: هشدار کمبود رطوبت خاک" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">
+                            <i class="fas fa-microchip"></i> نوع سنسور
+                        </label>
+                        <div class="btn-group w-100" role="group">
+                            <input type="radio" class="btn-check" name="sensor_type" id="sensor_soil" value="soil_moisture" autocomplete="off" checked>
+                            <label class="btn btn-outline-primary" for="sensor_soil">
+                                <i class="fas fa-seedling"></i> رطوبت خاک
+                            </label>
+                            <input type="radio" class="btn-check" name="sensor_type" id="sensor_temp" value="temperature" autocomplete="off">
+                            <label class="btn btn-outline-primary" for="sensor_temp">
+                                <i class="fas fa-thermometer-half"></i> دما
+                            </label>
+                            <input type="radio" class="btn-check" name="sensor_type" id="sensor_tank" value="tank_level" autocomplete="off">
+                            <label class="btn btn-outline-primary" for="sensor_tank">
+                                <i class="fas fa-water"></i> سطح تانک
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <label class="form-label">
+                                <i class="fas fa-code-branch"></i> عملگر
+                            </label>
+                            <select class="form-select" id="operator" name="operator" required>
+                                <option value="below">کمتر از (below)</option>
+                                <option value="above">بیشتر از (above)</option>
+                            </select>
+                        </div>
+                        <div class="col-md-8">
+                            <label for="threshold" class="form-label">
+                                <i class="fas fa-chart-line"></i> مقدار آستانه
+                            </label>
+                            <input type="number" class="form-control" id="threshold" name="threshold"
+                                   step="0.5" required>
+                            <div class="form-text" id="thresholdUnit">درصد (%)</div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="sms_template" class="form-label">
+                            <i class="fas fa-envelope"></i> متن پیامک
+                        </label>
+                        <textarea class="form-control" id="sms_template" name="sms_template"
+                                  rows="4" required
+                                  placeholder='مثال: هشدار! رطوبت خاک به {value}% رسیده است. لطفاً آبیاری کنید.'></textarea>
+                        <div class="form-text">
+                            <i class="fas fa-info-circle"></i>
+                            از <code>{value}</code> برای نمایش مقدار فعلی سنسور استفاده کنید.
+                            برای هشدار سطح تانک می‌توانید از <code>{remaining_liters}</code> نیز استفاده کنید.
+                        </div>
+                    </div>
+
+                    <div class="alert alert-info small">
+                        <i class="fas fa-lightbulb"></i>
+                        <strong>مثال‌های متن پیامک:</strong><br>
+                        • رطوبت خاک: <code>هشدار! رطوبت خاک به {value}% رسیده است.</code><br>
+                        • دما: <code>هشدار! دمای گلخانه به {value}°C رسیده است.</code><br>
+                        • تانک: <code>هشدار! سطح آب تانک به {value}% رسیده است. {remaining_liters} لیتر باقی مانده.</code>
+                    </div>
+                </div>
+                <div class="modal-footer border-0">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times"></i> انصراف
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> ذخیره قانون
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Guide -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card border-0 bg-light rounded-4 fade-in-up">
+            <div class="card-body">
+                <h6 class="mb-2">
+                    <i class="fas fa-question-circle text-primary"></i> راهنمای قوانین هشدار
+                </h6>
+                <p class="small text-muted mb-2">
+                    <strong>نحوه کار:</strong> هر بار که داده جدید از سنسورها دریافت می‌شود، تمام قوانین فعال بررسی می‌شوند.
+                    اگر شرط قانون برقرار باشد، پیامک هشدار به شماره موبایل ثبت‌شده در تنظیمات ارسال می‌گردد.
+                </p>
+                <p class="small text-muted mb-2">
+                    <strong>جلوگیری از ارسال مکرر:</strong> سیستم به صورت خودکار از ارسال مجدد هشدار مشابه در بازه زمانی مشخص
+                    (قابل تنظیم در صفحه تنظیمات) جلوگیری می‌کند.
+                </p>
+                <p class="small text-muted mb-0">
+                    <i class="fas fa-exclamation-triangle text-warning"></i>
+                    توجه: برای دریافت هشدارها، حتماً شماره موبایل خود را در صفحه تنظیمات وارد کنید.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const sensorRadios = document.querySelectorAll('input[name="sensor_type"]');
+    const thresholdUnitSpan = document.getElementById('thresholdUnit');
+    const thresholdInput = document.getElementById('threshold');
+    const smsTemplateTextarea = document.getElementById('sms_template');
+
+    function updateThresholdUnit() {
+        const selected = document.querySelector('input[name="sensor_type"]:checked').value;
+        if (selected === 'temperature') {
+            thresholdUnitSpan.innerHTML = 'درجه سانتی‌گراد (°C)';
+            thresholdInput.placeholder = 'مثال: 38';
+            if (!smsTemplateTextarea.value) {
+                smsTemplateTextarea.value = 'هشدار! دمای گلخانه به {value}°C رسیده است.';
+            }
+        } else {
+            thresholdUnitSpan.innerHTML = 'درصد (%)';
+            thresholdInput.placeholder = 'مثال: 25';
+            if (!smsTemplateTextarea.value) {
+                if (selected === 'soil_moisture') {
+                    smsTemplateTextarea.value = 'هشدار! رطوبت خاک به {value}% رسیده است. لطفاً آبیاری کنید.';
+                } else if (selected === 'tank_level') {
+                    smsTemplateTextarea.value = 'هشدار! سطح آب تانک به {value}% رسیده است. {remaining_liters} لیتر باقی مانده.';
+                }
+            }
+        }
+    }
+
+    sensorRadios.forEach(radio => {
+        radio.addEventListener('change', updateThresholdUnit);
+    });
+
+    updateThresholdUnit();
+</script>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.alert-rule-card {
+    transition: all 0.3s ease;
+    cursor: default;
+}
+.alert-rule-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 35px rgba(0,0,0,0.1) !important;
+}
+.alert-rule-icon {
+    width: 50px;
+    height: 50px;
+    background: rgba(156, 176, 128, 0.1);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.alert-rule-details {
+    background: #f8f9fa;
+    border-radius: 12px;
+}
+.alert-sms-preview {
+    background: #fff;
+    border-right: 3px solid #9CB080;
+    font-family: monospace;
+    font-size: 12px;
+    direction: ltr;
+    text-align: left;
+}
+.empty-state {
+    background: #f8f9fa;
+    border-radius: 20px;
+}
+.btn-check:checked + .btn-outline-primary {
+    background: #9CB080;
+    border-color: #9CB080;
+    color: white;
+}
+.modal-content {
+    border: none;
+}
+.form-control:focus, .form-select:focus {
+    border-color: #9CB080;
+    box-shadow: 0 0 0 0.2rem rgba(156, 176, 128, 0.25);
+}
+textarea {
+    font-family: monospace;
+    font-size: 13px;
+}
+.fade-in-up {
+    animation: fadeInUp 0.5s ease-out;
+}
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+</style>
+{% endblock %}

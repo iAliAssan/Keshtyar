@@ -1,0 +1,399 @@
+{% extends "base.html" %}
+
+{% block title %}قوانین اتوماسیون - دستیار هوشمند کشاورزی{% endblock %}
+
+{% block content %}
+<div class="row mb-4 fade-in-up">
+    <div class="col-12">
+        <div class="d-flex flex-wrap justify-content-between align-items-center">
+            <h3 class="mb-3 mb-md-0">
+                <i class="fas fa-cogs text-primary"></i> قوانین اتوماسیون رله‌ها
+            </h3>
+            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addRuleModal">
+                <i class="fas fa-plus"></i> افزودن قانون جدید
+            </button>
+        </div>
+        <p class="text-muted mt-2">
+            <i class="fas fa-info-circle"></i>
+            قوانین اتوماسیون می‌توانند بر اساس رطوبت خاک، دما، سطح تانک یا زمان عمل کنند.
+            عملگرهای قابل استفاده: &lt; ، &gt; ، = ، ≠
+        </p>
+    </div>
+</div>
+
+<!-- نمایش قوانین موجود (بدون تغییر) -->
+<div class="row g-3">
+    {% if rules %}
+        {% for rule in rules %}
+        <div class="col-md-6 col-lg-4">
+            <div class="card rule-card h-100 border-0 shadow-sm rounded-4 fade-in-up">
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <div class="rule-icon">
+                            {% if rule.rule_type == 'schedule' %}
+                                <i class="fas fa-clock fa-2x text-info"></i>
+                            {% elif rule.condition_type == 'and' %}
+                                <i class="fas fa-code-branch fa-2x text-primary"></i>
+                            {% else %}
+                                <i class="fas fa-tint fa-2x" style="color: #9CB080;"></i>
+                            {% endif %}
+                        </div>
+                        <div class="rule-status">
+                            {% if rule.active %}
+                                <span class="badge bg-success px-3 py-2">
+                                    <i class="fas fa-check-circle"></i> فعال
+                                </span>
+                            {% else %}
+                                <span class="badge bg-secondary px-3 py-2">
+                                    <i class="fas fa-ban"></i> غیرفعال
+                                </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <h5 class="mb-2">{{ rule.name }}</h5>
+                    <div class="rule-details bg-light rounded-3 p-3 mt-3">
+                        <small class="text-muted d-block mb-2">
+                            <i class="fas fa-plug"></i> رله: <strong>{{ rule.relay.name }}</strong>
+                        </small>
+                        {% if rule.condition_type == 'and' %}
+                            <small class="text-muted d-block mb-2">
+                                <i class="fas fa-arrow-down"></i> شرط اول:
+                                <strong>رطوبت خاک {% if rule.rule_type == 'moisture_below' %}کمتر از{% else %}بیشتر از{% endif %} {{ rule.threshold }}%</strong>
+                            </small>
+                            <small class="text-muted d-block">
+                                <i class="fas fa-plus-circle"></i> شرط دوم (AND):
+                                <strong>
+                                    {% if rule.second_sensor_type == 'soil_moisture' %}رطوبت خاک
+                                    {% elif rule.second_sensor_type == 'temperature' %}دما
+                                    {% else %}سطح تانک{% endif %}
+                                    {% if rule.second_operator == 'below' %}کمتر از{% else %}بیشتر از{% endif %}
+                                    {{ rule.second_threshold }}
+                                    {% if rule.second_sensor_type == 'temperature' %}°C{% else %}%{% endif %}
+                                </strong>
+                            </small>
+                        {% elif rule.rule_type == 'schedule' %}
+                            <small class="text-muted d-block">
+                                <i class="fas fa-calendar-day"></i> زمانبندی: <strong>ساعت {{ rule.schedule_time }}</strong>
+                            </small>
+                        {% else %}
+                            <small class="text-muted d-block">
+                                <i class="fas fa-chart-line"></i> شرط:
+                                <strong>
+                                    {% if 'soil_moisture' in rule.rule_type %}رطوبت خاک
+                                    {% elif 'temperature' in rule.rule_type %}دما
+                                    {% else %}سطح تانک{% endif %}
+                                    {% if 'below' in rule.rule_type %}کمتر از
+                                    {% elif 'above' in rule.rule_type %}بیشتر از
+                                    {% elif 'equal' in rule.rule_type %}مساوی
+                                    {% else %}نامساوی{% endif %}
+                                    {{ rule.threshold }}
+                                    {% if 'temperature' in rule.rule_type %}°C{% else %}%{% endif %}
+                                </strong>
+                            </small>
+                        {% endif %}
+                        <small class="text-muted d-block mt-2">
+                            <i class="fas fa-power-off"></i> عملیات:
+                            <strong class="{% if rule.action_state %}text-success{% else %}text-danger{% endif %}">
+                                {% if rule.action_state %}روشن کردن{% else %}خاموش کردن{% endif %}
+                            </strong>
+                        </small>
+                    </div>
+                    <div class="d-flex gap-2 mt-3">
+                        <a href="{{ url_for('toggle_rule', rule_id=rule.id) }}" class="btn btn-{{ 'warning' if rule.active else 'success' }} flex-grow-1">
+                            <i class="fas fa-{{ 'pause' if rule.active else 'play' }}"></i>
+                            {{ 'غیرفعال کردن' if rule.active else 'فعال کردن' }}
+                        </a>
+                        <a href="{{ url_for('delete_rule', rule_id=rule.id) }}" class="btn btn-outline-danger" onclick="return confirm('آیا از حذف قانون «{{ rule.name }}» اطمینان دارید؟')">
+                            <i class="fas fa-trash"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="col-12">
+            <div class="empty-state text-center py-5 fade-in-up">
+                <i class="fas fa-cogs fa-4x text-muted mb-3"></i>
+                <h5>هیچ قانونی تعریف نشده است</h5>
+                <p class="text-muted">برای اتوماسیون مزرعه، اولین قانون خود را اضافه کنید.</p>
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addRuleModal" {% if relays|length == 0 %}disabled{% endif %}>
+                    <i class="fas fa-plus"></i> افزودن قانون
+                </button>
+                {% if relays|length == 0 %}
+                <p class="text-danger small mt-2">ابتدا یک رله در صفحه مدیریت رله‌ها بسازید.</p>
+                {% endif %}
+            </div>
+        </div>
+    {% endif %}
+</div>
+
+<!-- مودال افزودن قانون -->
+<div class="modal fade" id="addRuleModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content rounded-4">
+            <div class="modal-header border-0">
+                <h5 class="modal-title">
+                    <i class="fas fa-plus-circle text-primary"></i> افزودن قانون جدید
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('add_rule') }}">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="name" class="form-label">
+                            <i class="fas fa-tag"></i> نام قانون
+                        </label>
+                        <input type="text" class="form-control" id="name" name="name" placeholder="مثال: خاموش شدن پمپ در دمای بالا" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="relay_id" class="form-label">
+                            <i class="fas fa-plug"></i> انتخاب رله <span class="text-danger">*</span>
+                        </label>
+                        <select class="form-select" id="relay_id" name="relay_id" required>
+                            <option value="">-- انتخاب کنید --</option>
+                            {% for relay in relays %}
+                                <option value="{{ relay.id }}">{{ relay.name }} (GPIO: {{ relay.gpio }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">
+                            <i class="fas fa-cog"></i> نوع قانون
+                        </label>
+                        <div class="btn-group w-100" role="group">
+                            <input type="radio" class="btn-check" name="condition_type" id="type_single" value="single" autocomplete="off" checked>
+                            <label class="btn btn-outline-primary" for="type_single">
+                                <i class="fas fa-single"></i> ساده
+                            </label>
+                            <input type="radio" class="btn-check" name="condition_type" id="type_and" value="and" autocomplete="off">
+                            <label class="btn btn-outline-primary" for="type_and">
+                                <i class="fas fa-code-branch"></i> ترکیبی (AND)
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- قانون ساده (با دکمه‌های گرافیکی) -->
+                    <div id="simpleFields">
+                        <div class="mb-3">
+                            <label class="form-label">
+                                <i class="fas fa-microchip"></i> نوع سنسور
+                            </label>
+                            <div class="btn-group w-100" role="group">
+                                <input type="radio" class="btn-check" name="sensor_type" id="sensor_soil" value="soil_moisture" autocomplete="off" checked>
+                                <label class="btn btn-outline-primary" for="sensor_soil">
+                                    <i class="fas fa-seedling"></i> رطوبت خاک
+                                </label>
+                                <input type="radio" class="btn-check" name="sensor_type" id="sensor_temp" value="temperature" autocomplete="off">
+                                <label class="btn btn-outline-primary" for="sensor_temp">
+                                    <i class="fas fa-thermometer-half"></i> دما
+                                </label>
+                                <input type="radio" class="btn-check" name="sensor_type" id="sensor_tank" value="tank_level" autocomplete="off">
+                                <label class="btn btn-outline-primary" for="sensor_tank">
+                                    <i class="fas fa-water"></i> سطح تانک
+                                </label>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">
+                                <i class="fas fa-code-branch"></i> عملگر
+                            </label>
+                            <div class="btn-group w-100" role="group">
+                                <input type="radio" class="btn-check" name="operator" id="op_below" value="below" autocomplete="off" checked>
+                                <label class="btn btn-outline-primary" for="op_below">
+                                    <i class="fas fa-arrow-down"></i> کمتر از (&lt;)
+                                </label>
+                                <input type="radio" class="btn-check" name="operator" id="op_above" value="above" autocomplete="off">
+                                <label class="btn btn-outline-primary" for="op_above">
+                                    <i class="fas fa-arrow-up"></i> بیشتر از (&gt;)
+                                </label>
+                                <input type="radio" class="btn-check" name="operator" id="op_equal" value="equal" autocomplete="off">
+                                <label class="btn btn-outline-primary" for="op_equal">
+                                    <i class="fas fa-equals"></i> مساوی (=)
+                                </label>
+                                <input type="radio" class="btn-check" name="operator" id="op_not_equal" value="not_equal" autocomplete="off">
+                                <label class="btn btn-outline-primary" for="op_not_equal">
+                                    <i class="fas fa-not-equal"></i> نامساوی (≠)
+                                </label>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="threshold" class="form-label">
+                                <i class="fas fa-chart-line"></i> مقدار آستانه
+                            </label>
+                            <input type="number" class="form-control" id="threshold" name="threshold" step="0.5" required>
+                            <div class="form-text" id="thresholdUnit">درصد (%)</div>
+                        </div>
+                    </div>
+
+                    <!-- قانون ترکیبی (بدون تغییر) -->
+                    <div id="andFields" class="d-none">
+                        <div class="alert alert-info small">
+                            <i class="fas fa-info-circle"></i> قانون ترکیبی زمانی اجرا می‌شود که هر دو شرط برقرار باشند.
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">شرط اول (رطوبت خاک)</label>
+                            <div class="btn-group w-100" role="group">
+                                <input type="radio" class="btn-check" name="rule_type_and" id="and_moisture_below" value="moisture_below" checked>
+                                <label class="btn btn-outline-primary" for="and_moisture_below">
+                                    <i class="fas fa-arrow-down"></i> کمتر از
+                                </label>
+                                <input type="radio" class="btn-check" name="rule_type_and" id="and_moisture_above" value="moisture_above">
+                                <label class="btn btn-outline-primary" for="and_moisture_above">
+                                    <i class="fas fa-arrow-up"></i> بیشتر از
+                                </label>
+                            </div>
+                            <input type="number" class="form-control mt-2" id="and_threshold" name="threshold" placeholder="مقدار آستانه (%)" step="1">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">شرط دوم (AND)</label>
+                            <select class="form-select mb-2" id="second_sensor_type" name="second_sensor_type">
+                                <option value="temperature">دما</option>
+                                <option value="tank_level">سطح تانک</option>
+                            </select>
+                            <div class="btn-group w-100 mb-2" role="group">
+                                <input type="radio" class="btn-check" name="second_operator" id="second_below" value="below" checked>
+                                <label class="btn btn-outline-primary" for="second_below">
+                                    <i class="fas fa-arrow-down"></i> کمتر از
+                                </label>
+                                <input type="radio" class="btn-check" name="second_operator" id="second_above" value="above">
+                                <label class="btn btn-outline-primary" for="second_above">
+                                    <i class="fas fa-arrow-up"></i> بیشتر از
+                                </label>
+                            </div>
+                            <input type="number" class="form-control" id="second_threshold" name="second_threshold" step="0.5" placeholder="مقدار آستانه">
+                            <div class="form-text" id="secondThresholdUnit">درجه سانتی‌گراد (°C)</div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3" id="actionField">
+                        <label class="form-label">عملیات هنگام برقراری شرط</label>
+                        <div class="btn-group w-100" role="group">
+                            <input type="radio" class="btn-check" name="action_state" id="action_on" value="on" checked>
+                            <label class="btn btn-outline-success" for="action_on">
+                                <i class="fas fa-toggle-on"></i> روشن کردن
+                            </label>
+                            <input type="radio" class="btn-check" name="action_state" id="action_off" value="off">
+                            <label class="btn btn-outline-danger" for="action_off">
+                                <i class="fas fa-toggle-off"></i> خاموش کردن
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-0">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">انصراف</button>
+                    <button type="submit" class="btn btn-primary">ذخیره قانون</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    // نمایش/پنهان کردن بخش قانون ساده/ترکیبی
+    const conditionRadios = document.querySelectorAll('input[name="condition_type"]');
+    const simpleFields = document.getElementById('simpleFields');
+    const andFields = document.getElementById('andFields');
+    function updateFormByCondition() {
+        const selected = document.querySelector('input[name="condition_type"]:checked').value;
+        if (selected === 'and') {
+            simpleFields.classList.add('d-none');
+            andFields.classList.remove('d-none');
+        } else {
+            simpleFields.classList.remove('d-none');
+            andFields.classList.add('d-none');
+        }
+    }
+    conditionRadios.forEach(radio => radio.addEventListener('change', updateFormByCondition));
+    updateFormByCondition();
+
+    // تغییر واحد آستانه بر اساس نوع سنسور (برای دکمه‌های گرافیکی)
+    const sensorRadios = document.querySelectorAll('input[name="sensor_type"]');
+    const thresholdUnit = document.getElementById('thresholdUnit');
+    function updateThresholdUnit() {
+        let selected = null;
+        sensorRadios.forEach(radio => { if (radio.checked) selected = radio.value; });
+        if (selected === 'temperature') {
+            thresholdUnit.innerHTML = 'درجه سانتی‌گراد (°C)';
+            document.getElementById('threshold').placeholder = 'مثال: 35';
+        } else {
+            thresholdUnit.innerHTML = 'درصد (%)';
+            document.getElementById('threshold').placeholder = 'مثال: 25';
+        }
+    }
+    sensorRadios.forEach(radio => radio.addEventListener('change', updateThresholdUnit));
+    updateThresholdUnit();
+
+    // واحد شرط دوم ترکیبی
+    const secondSensor = document.getElementById('second_sensor_type');
+    const secondUnit = document.getElementById('secondThresholdUnit');
+    function updateSecondUnit() {
+        if (secondSensor.value === 'temperature') {
+            secondUnit.innerHTML = 'درجه سانتی‌گراد (°C)';
+            document.getElementById('second_threshold').placeholder = 'مثال: 35';
+        } else {
+            secondUnit.innerHTML = 'درصد (%)';
+            document.getElementById('second_threshold').placeholder = 'مثال: 50';
+        }
+    }
+    secondSensor.addEventListener('change', updateSecondUnit);
+    updateSecondUnit();
+</script>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.rule-card {
+    transition: all 0.3s ease;
+    cursor: default;
+}
+.rule-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 35px rgba(0,0,0,0.1) !important;
+}
+.rule-icon {
+    width: 50px;
+    height: 50px;
+    background: rgba(156, 176, 128, 0.1);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.rule-details {
+    background: #f8f9fa;
+    border-radius: 12px;
+}
+.empty-state {
+    background: #f8f9fa;
+    border-radius: 20px;
+}
+.btn-check:checked + .btn-outline-primary {
+    background: #9CB080;
+    border-color: #9CB080;
+    color: white;
+}
+.btn-check:checked + .btn-outline-success {
+    background: #28a745;
+    border-color: #28a745;
+}
+.btn-check:checked + .btn-outline-danger {
+    background: #dc3545;
+    border-color: #dc3545;
+}
+.modal-content {
+    border: none;
+}
+.form-control:focus, .form-select:focus {
+    border-color: #9CB080;
+    box-shadow: 0 0 0 0.2rem rgba(156, 176, 128, 0.25);
+}
+.fade-in-up {
+    animation: fadeInUp 0.5s ease-out;
+}
+@keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+</style>
+{% endblock %}

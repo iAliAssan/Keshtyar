@@ -1,0 +1,292 @@
+{% extends "base.html" %}
+
+{% block title %}تنظیمات دستگاه - دستیار هوشمند کشاورزی{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h3>
+            <i class="fas fa-microchip text-primary"></i> تنظیمات دستگاه ESP32
+        </h3>
+        <p class="text-muted">اطلاعات مورد نیاز برای پیکربندی دستگاه هوشمند خود</p>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Device Configuration Card -->
+    <div class="col-lg-6">
+        <div class="card border-0 shadow-sm rounded-4">
+            <div class="card-header bg-transparent border-0 pt-4">
+                <h5 class="mb-0">
+                    <i class="fas fa-info-circle"></i> اطلاعات اتصال به سرور
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-4">
+                    <label class="form-label fw-bold">
+                        <i class="fas fa-server"></i> آدرس سرور (API Endpoint)
+                    </label>
+                    <div class="input-group">
+                        <input type="text" class="form-control font-monospace bg-light"
+                               id="apiUrl" value="{{ api_url }}" readonly dir="ltr">
+                        <button class="btn btn-outline-primary copy-btn" data-clipboard-target="#apiUrl">
+                            <i class="fas fa-copy"></i>
+                        </button>
+                    </div>
+                    <small class="text-muted">آدرسی که ESP32 برای ارسال داده باید به آن درخواست POST بزند.</small>
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label fw-bold">
+                        <i class="fas fa-qrcode"></i> کد یکتا دستگاه (Device Code)
+                    </label>
+                    <div class="input-group">
+                        <input type="text" class="form-control font-monospace bg-light"
+                               id="deviceCode" value="{{ device_code }}" readonly dir="ltr" style="letter-spacing: 2px;">
+                        <button class="btn btn-outline-primary copy-btn" data-clipboard-target="#deviceCode">
+                            <i class="fas fa-copy"></i>
+                        </button>
+                    </div>
+                    <small class="text-muted">این کد را در فایل config.py دستگاه قرار دهید.</small>
+                </div>
+
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <strong>نکته امنیتی:</strong>
+                    این کد یکتا منحصر به فرد است. آن را با کسی به اشتراک نگذارید.
+                </div>
+            </div>
+        </div>
+
+        <!-- GPRS Settings Card -->
+        <div class="card border-0 shadow-sm rounded-4 mt-4">
+            <div class="card-header bg-transparent border-0 pt-4">
+                <h5 class="mb-0">
+                    <i class="fas fa-satellite-dish"></i> تنظیمات GPRS (SIM800C)
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-bordered">
+                        <thead class="table-light">
+                            <tr><th>پارامتر</th><th>مقدار پیش‌فرض</th><th>توضیحات</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><td>APN</td><td class="font-monospace">mtnirancell</td><td>متناسب با اپراتور خود تغییر دهید</td></tr>
+                            <tr><td>Username</td><td class="font-monospace"></td><td>در صورت نیاز</td></tr>
+                            <tr><td>Password</td><td class="font-monospace"></td><td>در صورت نیاز</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="alert alert-info small mb-0">
+                    <i class="fas fa-info-circle"></i>
+                    برای اپراتور ایرانسل: APN=mtnirancell<br>
+                    برای اپراتور همراه اول: APN=mcinet<br>
+                    برای اپراتور رایتل: APN=raytel
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MicroPython Code Card -->
+    <div class="col-lg-6">
+        <div class="card border-0 shadow-sm rounded-4">
+            <div class="card-header bg-transparent border-0 pt-4">
+                <h5 class="mb-0">
+                    <i class="fab fa-python"></i> کد نمونه MicroPython
+                </h5>
+            </div>
+            <div class="card-body">
+                <p class="small text-muted">فایل <code>config.py</code> را روی ESP32 با مقادیر زیر تنظیم کنید:</p>
+
+                <div class="code-block bg-dark text-light p-3 rounded-3 mb-3">
+                    <pre class="mb-0" style="font-family: monospace; font-size: 12px; overflow-x: auto;">
+<span style="color: #6A9955;"># config.py - تنظیمات دستگاه ESP32</span>
+
+<span style="color: #569CD6;">import</span> network
+<span style="color: #569CD6;">import</span> time
+
+<span style="color: #6A9955;"># ========== تنظیمات سرور ==========</span>
+<span style="color: #9CDCFE;">SERVER_URL</span> = <span style="color: #CE9178;">"{{ api_url }}"</span>
+<span style="color: #9CDCFE;">DEVICE_CODE</span> = <span style="color: #CE9178;">"{{ device_code }}"</span>
+
+<span style="color: #6A9955;"># ========== تنظیمات سنسورها ==========</span>
+<span style="color: #6A9955;"># AHT20 (دما و رطوبت)</span>
+<span style="color: #9CDCFE;">AHT20_SDA</span> = <span style="color: #B5CEA8;">2</span>
+<span style="color: #9CDCFE;">AHT20_SCL</span> = <span style="color: #B5CEA8;">1</span>
+
+<span style="color: #6A9955;"># سنسور رطوبت خاک (خازنی)</span>
+<span style="color: #9CDCFE;">SOIL_SENSOR_ADC</span> = <span style="color: #B5CEA8;">4</span>
+
+<span style="color: #6A9955;"># HC-SR04 (سنسور فاصله تانک)</span>
+<span style="color: #9CDCFE;">HC_SR04_TRIG</span> = <span style="color: #B5CEA8;">5</span>
+<span style="color: #9CDCFE;">HC_SR04_ECHO</span> = <span style="color: #B5CEA8;">6</span>
+
+<span style="color: #6A9955;"># ========== تنظیمات GPRS (SIM800C) ==========</span>
+<span style="color: #9CDCFE;">APN</span> = <span style="color: #CE9178;">"mtnirancell"</span>
+<span style="color: #9CDCFE;">GPRS_USER</span> = <span style="color: #CE9178;">""</span>
+<span style="color: #9CDCFE;">GPRS_PASSWORD</span> = <span style="color: #CE9178;">""</span>
+
+<span style="color: #6A9955;"># ========== تنظیمات رله‌ها ==========</span>
+<span style="color: #6A9955;"># لیست GPIO رله‌ها (از سرور دریافت می‌شود)</span>
+<span style="color: #9CDCFE;">RELAY_GPIO_LIST</span> = [<span style="color: #B5CEA8;">12</span>, <span style="color: #B5CEA8;">13</span>, <span style="color: #B5CEA8;">14</span>, <span style="color: #B5CEA8;">15</span>]
+
+<span style="color: #6A9955;"># ========== تنظیمات دستگاه ==========</span>
+<span style="color: #9CDCFE;">SEND_INTERVAL</span> = <span style="color: #B5CEA8;">60</span>  <span style="color: #6A9955;"># ثانیه</span>
+<span style="color: #9CDCFE;">HTTP_TIMEOUT</span> = <span style="color: #B5CEA8;">30</span>   <span style="color: #6A9955;"># ثانیه</span>
+                    </pre>
+                </div>
+
+                <a href="{{ url_for('static', filename='micropython_sample.zip') }}"
+                   class="btn btn-outline-primary w-100 mb-2" id="downloadSampleBtn">
+                    <i class="fas fa-download"></i> دانلود فایل‌های نمونه MicroPython
+                </a>
+
+                <div class="alert alert-success small mt-3 mb-0">
+                    <i class="fas fa-check-circle"></i>
+                    <strong>مراحل راه‌اندازی دستگاه:</strong>
+                    <ol class="mt-2 mb-0">
+                        <li>فایل config.py را با مقادیر بالا تنظیم کنید</li>
+                        <li>فایل‌های main.py, sensors.py, sim800.py, relay.py را روی ESP32 کپی کنید</li>
+                        <li>دستگاه را راه‌اندازی مجدد کنید</li>
+                        <li>در این صفحه وضعیت اتصال را بررسی کنید</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+
+        <!-- Connection Status Card -->
+        <div class="card border-0 shadow-sm rounded-4 mt-4">
+            <div class="card-header bg-transparent border-0 pt-4">
+                <h5 class="mb-0">
+                    <i class="fas fa-plug"></i> وضعیت اتصال دستگاه
+                </h5>
+            </div>
+            <div class="card-body text-center" id="connectionStatus">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">در حال بررسی...</span>
+                </div>
+                <p class="mt-2 text-muted">در حال بررسی آخرین ارتباط دستگاه...</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.11/clipboard.min.js"></script>
+<script>
+    // Initialize clipboard
+    const clipboard = new ClipboardJS('.copy-btn');
+    clipboard.on('success', function(e) {
+        const btn = e.trigger;
+        const originalHtml = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-check"></i>';
+        setTimeout(() => {
+            btn.innerHTML = originalHtml;
+        }, 2000);
+        e.clearSelection();
+    });
+
+    // Check device connection status
+    function checkConnectionStatus() {
+        const statusDiv = document.getElementById('connectionStatus');
+
+        fetch('/api/last_sensor_data')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success && data.last_update) {
+                    const lastUpdate = new Date(data.last_update);
+                    const now = new Date();
+                    const diffMinutes = Math.floor((now - lastUpdate) / 60000);
+
+                    if (diffMinutes < 5) {
+                        statusDiv.innerHTML = `
+                            <div class="text-success">
+                                <i class="fas fa-check-circle fa-4x mb-2"></i>
+                                <h5>دستگاه متصل است</h5>
+                                <p class="text-muted small">آخرین ارتباط: ${diffMinutes} دقیقه پیش</p>
+                                <span class="badge bg-success">آنلاین</span>
+                            </div>
+                        `;
+                    } else {
+                        statusDiv.innerHTML = `
+                            <div class="text-warning">
+                                <i class="fas fa-exclamation-triangle fa-4x mb-2"></i>
+                                <h5>ارتباط قطع است</h5>
+                                <p class="text-muted small">آخرین ارتباط: ${diffMinutes} دقیقه پیش</p>
+                                <span class="badge bg-warning">قطع</span>
+                            </div>
+                        `;
+                    }
+                } else {
+                    statusDiv.innerHTML = `
+                        <div class="text-secondary">
+                            <i class="fas fa-microchip fa-4x mb-2"></i>
+                            <h5>هنوز داده‌ای دریافت نشده</h5>
+                            <p class="text-muted small">پس از راه‌اندازی دستگاه، وضعیت در اینجا نمایش داده می‌شود</p>
+                            <span class="badge bg-secondary">در انتظار</span>
+                        </div>
+                    `;
+                }
+            })
+            .catch(error => {
+                console.error('Error checking status:', error);
+                statusDiv.innerHTML = `
+                    <div class="text-danger">
+                        <i class="fas fa-times-circle fa-4x mb-2"></i>
+                        <h5>خطا در بررسی وضعیت</h5>
+                        <p class="text-muted small">لطفاً صفحه را دوباره بارگذاری کنید</p>
+                    </div>
+                `;
+            });
+    }
+
+    // Check status on page load and every 30 seconds
+    checkConnectionStatus();
+    setInterval(checkConnectionStatus, 30000);
+</script>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.code-block {
+    background: #1e1e1e;
+    border-radius: 12px;
+    overflow-x: auto;
+}
+
+.code-block pre {
+    margin: 0;
+    font-family: 'Courier New', monospace;
+    font-size: 12px;
+    line-height: 1.5;
+    direction: ltr;
+    text-align: left;
+}
+
+.input-group .form-control:read-only {
+    background-color: #f8f9fa;
+}
+
+.copy-btn {
+    transition: all 0.2s ease;
+}
+
+.copy-btn:hover {
+    background: #9CB080;
+    border-color: #9CB080;
+    color: white;
+}
+
+.table-bordered {
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+#connectionStatus {
+    min-height: 150px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+</style>
+{% endblock %}
