@@ -1,0 +1,159 @@
+{% extends "base.html" %}
+
+{% block title %}ورود - دستیار هوشمند کشاورزی{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center min-vh-100 align-items-center">
+    <div class="col-md-6 col-lg-5 col-xl-4">
+        <div class="card shadow-lg border-0 rounded-4">
+            <div class="card-header bg-transparent text-center pt-4 pb-0 border-0">
+                <div class="mb-3">
+                    <i class="fas fa-leaf fa-3x" style="color: #9CB080;"></i>
+                </div>
+                <h3 class="mb-0">ورود به حساب کاربری</h3>
+                <p class="text-muted mt-2">دستیار هوشمند کشاورزی</p>
+            </div>
+
+            <div class="card-body p-4">
+                <form method="POST" action="{{ url_for('login') }}">
+                    <div class="mb-3">
+                        <label for="device_code" class="form-label">
+                            <i class="fas fa-qrcode"></i> کد یکتا دستگاه
+                        </label>
+                        <input type="text" class="form-control form-control-lg"
+                               id="device_code" name="device_code"
+                               placeholder="مثال: A7B3F9G2"
+                               dir="ltr" style="text-align: center; letter-spacing: 2px;"
+                               required autofocus>
+                        <div class="form-text">کد ۸ رقمی که هنگام خرید دستگاه دریافت کرده‌اید.</div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="password" class="form-label">
+                            <i class="fas fa-lock"></i> رمز عبور
+                        </label>
+                        <input type="password" class="form-control form-control-lg"
+                               id="password" name="password"
+                               placeholder="********"
+                               required>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary btn-lg w-100">
+                        <i class="fas fa-sign-in-alt"></i> ورود
+                    </button>
+                </form>
+
+                <div class="text-center mt-3">
+                    <a href="#" data-bs-toggle="modal" data-bs-target="#forgotPasswordModal" class="text-muted text-decoration-none small">
+                        <i class="fas fa-question-circle"></i> رمز عبور را فراموش کرده‌اید؟
+                    </a>
+                </div>
+
+                <hr class="my-4">
+
+                <div class="text-center">
+                    <p class="text-muted mb-2">حساب کاربری ندارید؟</p>
+                    <a href="{{ url_for('register') }}" class="btn btn-outline-success w-100">
+                        <i class="fas fa-user-plus"></i> ثبت‌نام
+                    </a>
+                </div>
+
+                <div class="text-center mt-4">
+                    <p class="text-muted small mb-0">
+                        <i class="fas fa-tractor"></i> کشاورزی هوشمند با فناوری IoT
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ویژگی‌های سیستم -->
+        <div class="row mt-4 g-3 text-center">
+            <div class="col-6 col-md-3">
+                <div class="small text-muted">
+                    <i class="fas fa-tachometer-alt"></i> پایش لحظه‌ای
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="small text-muted">
+                    <i class="fas fa-tint"></i> مدیریت آبیاری
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="small text-muted">
+                    <i class="fas fa-cloud-sun-rain"></i> پیش‌بینی آب و هوا
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="small text-muted">
+                    <i class="fas fa-mobile-alt"></i> هشدارهای SMS
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal فراموشی رمز عبور -->
+<div class="modal fade" id="forgotPasswordModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4">
+            <div class="modal-header border-0">
+                <h5 class="modal-title">
+                    <i class="fas fa-headset"></i> بازیابی رمز عبور
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center">
+                <i class="fas fa-phone-alt fa-3x text-primary mb-3"></i>
+                <p>برای بازیابی رمز عبور خود، با پشتیبانی تماس بگیرید.</p>
+                <div class="alert alert-info">
+                    <strong>شماره پشتیبانی:</strong><br>
+                    ۰۲۱-۱۲۳۴۵۶۷۸
+                </div>
+                <p class="small text-muted mb-0">
+                    لطفاً کد یکتا دستگاه خود را هنگام تماس آماده داشته باشید.
+                </p>
+            </div>
+            <div class="modal-footer border-0 justify-content-center">
+                <button type="button" class="btn btn-primary px-4" data-bs-dismiss="modal">
+                    متوجه شدم
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .card {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+    }
+
+    .btn-primary {
+        background: #9CB080;
+        border-color: #9CB080;
+        transition: all 0.3s ease;
+    }
+
+    .btn-primary:hover {
+        background: #7a8f60;
+        border-color: #7a8f60;
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(156, 176, 128, 0.3);
+    }
+
+    .btn-outline-success {
+        transition: all 0.3s ease;
+    }
+
+    .btn-outline-success:hover {
+        transform: translateY(-2px);
+    }
+
+    input:focus {
+        border-color: #9CB080;
+        box-shadow: 0 0 0 0.2rem rgba(156, 176, 128, 0.25);
+    }
+</style>
+{% endblock %}
